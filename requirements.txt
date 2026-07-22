@@ -1,0 +1,8 @@
+# Turkish Technic — Komponent Envanter 2033 · Python bağımlılıkları
+# Test edilen sürümler (Python 3.10+)
+pandas==2.3.3
+numpy==2.2.6
+tensorflow==2.21.0
+# Not: Apple Silicon (M1/M2/M3) Mac'te tensorflow==2.21.0 arm64 wheel ile çalışır.
+# Sadece veri analizini (analysis.py, inv_analysis.py) çalıştıracaksan tensorflow gerekmez;
+# o durumda yalnızca pandas ve numpy yeterlidir.
