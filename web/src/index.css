@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-tk-mist text-tk-ink font-sans text-base;
+  }
+
+  /* spec 1.6 — görünür klavye focus halkası */
+  :focus-visible {
+    outline: 2px solid theme('colors.tk-red');
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* fare ile tıklamada halka çıkmasın */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* spec 1.2 — sayısal hücrelerde tabular-nums zorunlu */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply font-display font-semibold uppercase text-xs text-tk-slate;
+    letter-spacing: 0.06em;
+  }
+
+  /* yatay kaydırılabilir sekme çubuğunda kaydırma çubuğunu gizle */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* spec 1.6 — prefers-reduced-motion desteği */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
