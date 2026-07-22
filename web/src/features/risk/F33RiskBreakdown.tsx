@@ -48,7 +48,7 @@ export const F33RiskBreakdown: FC = () => {
         </div>
         <div className="text-right">
           <span className="eyebrow">risk skoru</span>
-          <div className="tnum font-display text-2xl font-bold leading-none text-tk-red">
+          <div className="tnum font-display text-2xl font-extrabold leading-none text-tk-red tracking-[-.02em]">
             {sayi(toplam, 1)}
           </div>
         </div>

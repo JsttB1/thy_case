@@ -53,7 +53,7 @@ export const F13Intermittent: FC = () => {
   return (
     <div className="flex flex-1 flex-col">
       <div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-        <span className="tnum font-display text-2xl font-bold text-tk-red">
+        <span className="tnum font-display text-2xl font-extrabold text-tk-red tracking-[-.02em]">
           {sayi(kesikliPn)}
         </span>
         <span className="text-sm text-tk-slate">
@@ -72,7 +72,7 @@ export const F13Intermittent: FC = () => {
               formatter={(v) => [`${sayi(v as number)} PN`, 'adet']}
               labelFormatter={(l) => `Yıllık talep ${l}`}
             />
-            <Bar dataKey="pn" radius={[2, 2, 0, 0]}>
+            <Bar dataKey="pn" radius={[2, 2, 0, 0]} isAnimationActive={false}>
               {veri.map((v) => (
                 <Cell key={v.etiket} fill={v.kesikli ? '#E81932' : '#8B94A3'} />
               ))}
@@ -93,10 +93,11 @@ export const F13Intermittent: FC = () => {
       </div>
 
       <p className="mt-auto pt-4 text-sm leading-relaxed text-tk-slate">
-        {sayi(dusukTalep)} PN yılda dörtten az hareket görüyor. Bu kalemlerde çeyreklik ortalama
-        almak sürekli bir talep varmış gibi davranır ve gereksiz stok üretir; SBA talebi
-        &quot;ne sıklıkla&quot; ve &quot;gelince ne kadar&quot; diye ikiye ayırarak bu sapmayı
-        düzeltir.
+        Kırmızı bölge yılda dörtten az hareket eden {sayi(dusukTalep)} PN. Kesikli sınıfı bundan
+        geniş ({sayi(kesikliPn)} PN): ADI ve CV² eşikleri hacmi yüksek ama düzensiz aralıklarla
+        hareket eden kalemleri de içeri alıyor. Her ikisinde de çeyreklik ortalama almak sürekli
+        bir talep varmış gibi davranıp gereksiz stok üretir; SBA talebi &quot;ne sıklıkla&quot; ve
+        &quot;gelince ne kadar&quot; diye ikiye ayırarak bu sapmayı düzeltir.
       </p>
     </div>
   );

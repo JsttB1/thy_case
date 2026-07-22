@@ -46,9 +46,9 @@ export const F11Seasonality: FC = () => {
               formatter={(v, n) => [`${sayi(v as number)} adet`, n as string]}
             />
             <Legend wrapperStyle={{ fontSize: 12 }} iconType="square" iconSize={9} />
-            <Bar dataKey="thy" stackId="a" name="THY" fill="#1A1D21" />
-            <Bar dataKey="pool" stackId="a" name="Havuz" fill="#5A6472" />
-            <Bar dataKey="scrap" stackId="a" name="Scrap" fill="#8B94A3" radius={[2, 2, 0, 0]} />
+            <Bar dataKey="thy" stackId="a" name="THY" fill="#1A1D21" isAnimationActive={false} />
+            <Bar dataKey="pool" stackId="a" name="Havuz" fill="#5A6472" isAnimationActive={false} />
+            <Bar dataKey="scrap" stackId="a" name="Scrap" fill="#8B94A3" radius={[2, 2, 0, 0]} isAnimationActive={false} />
           </BarChart>
         </ResponsiveContainer>
       </div>

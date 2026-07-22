@@ -45,7 +45,7 @@ export const F20StatusMatrix: FC = () => {
                 stackId="a"
                 fill={KRITIKLIK_RENK[c]}
                 radius={j === cols.length - 1 ? [2, 2, 0, 0] : undefined}
-              />
+              isAnimationActive={false} />
             ))}
           </BarChart>
         </ResponsiveContainer>

@@ -46,7 +46,7 @@ export const F30RiskHistogram: FC = () => {
               formatter={(v) => [`${sayi(v as number)} PN`, 'adet']}
               labelFormatter={(l) => `Risk skoru ${l}`}
             />
-            <Bar dataKey="pn" radius={[2, 2, 0, 0]}>
+            <Bar dataKey="pn" radius={[2, 2, 0, 0]} isAnimationActive={false}>
               {veri.map((v) => (
                 <Cell key={v.kova} fill={v.yuksek ? '#E81932' : '#8B94A3'} />
               ))}
@@ -58,13 +58,13 @@ export const F30RiskHistogram: FC = () => {
       <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-tk-line pt-4">
         <div>
           <dt className="eyebrow">yüksek risk (&gt;70)</dt>
-          <dd className="tnum font-display text-xl font-bold text-tk-red">
+          <dd className="tnum font-display text-xl font-extrabold text-tk-red tracking-[-.02em]">
             {sayi(data.kpi.riskHigh)}
           </dd>
         </div>
         <div>
           <dt className="eyebrow">orta risk (40–70)</dt>
-          <dd className="tnum font-display text-xl font-bold text-sig-warn">
+          <dd className="tnum font-display text-xl font-extrabold text-sig-warn tracking-[-.02em]">
             {sayi(data.kpi.riskMid)}
           </dd>
         </div>

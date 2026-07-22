@@ -111,7 +111,7 @@ export const F32TopRisk: FC = () => {
                       style={{ width: `${Math.min(100, r.RISK)}%` }}
                     />
                   </span>
-                  <span className="tnum w-9 text-right font-display text-base font-bold">
+                  <span className="tnum w-9 text-right font-display text-base font-extrabold tracking-[-.02em]">
                     {sayi(r.RISK, 0)}
                   </span>
                 </span>

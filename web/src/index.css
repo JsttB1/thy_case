@@ -37,7 +37,7 @@
 @layer components {
   .eyebrow {
     @apply font-display font-semibold uppercase text-xs text-tk-slate;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.07em;
   }
 
   /* yatay kaydırılabilir sekme çubuğunda kaydırma çubuğunu gizle */

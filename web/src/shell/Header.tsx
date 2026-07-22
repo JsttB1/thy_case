@@ -1,8 +1,9 @@
-import type { FC } from 'react';
-import { Info } from 'lucide-react';
+import { useState, type FC } from 'react';
+import { HelpCircle, Info } from 'lucide-react';
 import { useStore, type FiloYili } from '../store';
 import { useDatum } from '../data/useData';
 import TulipMark from './TulipMark';
+import GlossaryModal from './GlossaryModal';
 
 const YILLAR: FiloYili[] = [2025, 2033];
 
@@ -39,16 +40,19 @@ const YilSecici: FC = () => {
 
 export const Header: FC = () => {
   const meta = useDatum('meta').data;
+  const [sozlukAcik, setSozlukAcik] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-tk-line bg-tk-white/95 backdrop-blur">
-      <div className="mx-auto flex h-header max-w-shell items-center justify-between gap-4 px-4 md:px-8">
+    // yükseklik kenarlık dahil tam 64px olmalı: sekme çubuğu top-header (64px) ile
+    // buraya yapışıyor, 1px fazlası çubuğu başlığın altına kaydırıyor
+    <header className="sticky top-0 z-40 box-border h-header border-b border-tk-line bg-tk-white/95 backdrop-blur">
+      <div className="mx-auto flex h-full max-w-shell items-center justify-between gap-4 px-4 md:px-8">
         <div className="flex min-w-0 items-center gap-3">
           <TulipMark size={30} />
           <div className="min-w-0">
             <h1
-              className="truncate font-display text-lg font-bold uppercase leading-none"
-              style={{ letterSpacing: '.06em' }}
+              className="truncate font-display text-lg font-extrabold uppercase leading-none"
+              style={{ letterSpacing: '.035em' }}
             >
               {meta?.baslik ?? 'Envanter Kontrol Kulesi'}
             </h1>
@@ -60,6 +64,15 @@ export const Header: FC = () => {
 
         <div className="flex shrink-0 items-center gap-3">
           <YilSecici />
+          <button
+            type="button"
+            onClick={() => setSozlukAcik(true)}
+            aria-label="Terimler sözlüğü"
+            title="Terimler sözlüğü"
+            className="rounded border border-tk-line p-1.5 text-tk-slate transition-colors duration-100 hover:border-tk-slate/40 hover:text-tk-ink"
+          >
+            <HelpCircle size={15} strokeWidth={2.2} />
+          </button>
           <span
             title={meta?.uyari}
             className="hidden items-center gap-1.5 rounded-[4px] border border-tk-line bg-tk-mist px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-tk-slate lg:inline-flex"
@@ -69,6 +82,8 @@ export const Header: FC = () => {
           </span>
         </div>
       </div>
+
+      <GlossaryModal acik={sozlukAcik} onKapat={() => setSozlukAcik(false)} />
     </header>
   );
 };

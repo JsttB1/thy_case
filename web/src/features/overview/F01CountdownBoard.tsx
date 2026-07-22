@@ -82,7 +82,7 @@ const Satir: FC<{ r: GeriSayimPn; gorunur: boolean; onSec: () => void }> = ({
           </span>
         )}
         <span
-          className={`tnum min-w-[70px] text-right font-display text-[28px] font-bold leading-none ${kalanGunRenkInk(
+          className={`tnum min-w-[70px] text-right font-display text-[28px] font-extrabold tracking-[-.02em] leading-none ${kalanGunRenkInk(
             r.KALAN_GUN,
           )}`}
         >
@@ -132,8 +132,8 @@ export const F01CountdownBoard: FC = () => {
         <div>
           <h2
             id="F01-baslik"
-            className="font-display text-lg font-bold uppercase leading-none"
-            style={{ letterSpacing: '.06em' }}
+            className="font-display text-lg font-extrabold uppercase leading-none"
+            style={{ letterSpacing: '.035em' }}
           >
             Sipariş Geri Sayımı
           </h2>
@@ -142,7 +142,7 @@ export const F01CountdownBoard: FC = () => {
             tarihi geçmiş
           </p>
         </div>
-        <div className="tnum font-display text-lg font-bold uppercase tracking-wide">
+        <div className="tnum font-display text-lg font-extrabold uppercase tracking-wide">
           <span className="text-sig-crit-ink">{sayi(gecikmisPn)} GECİKMİŞ</span>
           <span className="mx-2 text-white/25">·</span>
           <span className="text-white">{sayi(gecikmisAog)} AOG KRİTİK</span>

@@ -25,6 +25,23 @@ export const Drawer: FC<Props> = ({
   const panelRef = useRef<HTMLDivElement>(null);
   const oncekiOdak = useRef<HTMLElement | null>(null);
 
+  // onKapat her render'da yeni kimlik alabilir; efektin ona bağlanmaması için ref'te tutuluyor
+  const kapatRef = useRef(onKapat);
+  kapatRef.current = onKapat;
+
+  /**
+   * Sayfa kaydırma kilidi — yalnız `acik` değişiminde çalışır.
+   * Efekt onKapat'a bağlanırsa her render'da temizlenip yeniden kuruluyor ve
+   * "önceki overflow" değeri 'hidden' olarak yakalanıp kilit kalıcı hale geliyordu.
+   */
+  useEffect(() => {
+    if (!acik) return;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [acik]);
+
   useEffect(() => {
     if (!acik) return;
 
@@ -32,20 +49,15 @@ export const Drawer: FC<Props> = ({
     panelRef.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onKapat();
+      if (e.key === 'Escape') kapatRef.current();
     };
     document.addEventListener('keydown', onKey);
 
-    // arkadaki sayfa kaymasın
-    const eskiOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = eskiOverflow;
       oncekiOdak.current?.focus?.();
     };
-  }, [acik, onKapat]);
+  }, [acik]);
 
   if (!acik) return null;
 

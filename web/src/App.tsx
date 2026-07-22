@@ -1,4 +1,4 @@
-import { useEffect, type FC } from 'react';
+import { Suspense, lazy, useEffect, type FC } from 'react';
 import Header from './shell/Header';
 import TabBar from './shell/TabBar';
 import FeatureGrid from './shell/FeatureGrid';
@@ -7,8 +7,12 @@ import { useStore } from './store';
 import { needsByTab } from './registry';
 import { prefetch } from './data/useData';
 
+// F61 global çekmece — her sekmeden açılabilir, gridde kart olarak durmaz
+const PnDrawer = lazy(() => import('./features/explorer/PnDrawer'));
+
 const App: FC = () => {
   const aktifSekme = useStore((s) => s.aktifSekme);
+  const seciliPn = useStore((s) => s.seciliPn);
 
   // shell metinleri meta.json'dan gelir; ilk sekmenin verisini de önden al
   useEffect(() => {
@@ -34,6 +38,12 @@ const App: FC = () => {
       </main>
 
       <Footer />
+
+      {seciliPn && (
+        <Suspense fallback={null}>
+          <PnDrawer />
+        </Suspense>
+      )}
     </div>
   );
 };

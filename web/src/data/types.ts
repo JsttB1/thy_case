@@ -244,6 +244,8 @@ export interface Station {
 export interface Stations {
   stations: Station[];
   kapsamKatsayilari: Record<DepoTipi, number>;
+  /** veri kaynağı notu — istasyon kırılımı temsilidir */
+  not?: string;
 }
 
 /* ── meta.json ────────────────────────────────────────────── */

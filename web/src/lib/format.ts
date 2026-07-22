@@ -46,13 +46,16 @@ export function paraTam(v: number | null | undefined): string {
   return `${v < 0 ? '−' : ''}$${int0.format(Math.round(Math.abs(v)))}`;
 }
 
-/** Büyük adet kısaltma — eksende yer kazanmak için. 147264 → "147,3 B" */
+/**
+ * Eksen etiketi için adet. Milyon altı değerler tam yazılır —
+ * "B" (bin) kısaltması eksende milyar gibi okunuyor, o yüzden kullanılmıyor.
+ * 147264 → "147.264" · 2500000 → "2,5 M"
+ */
 export function adetKisa(v: number | null | undefined): string {
   if (v == null || !Number.isFinite(v)) return '—';
   const a = Math.abs(v);
   const isaret = v < 0 ? '−' : '';
   if (a >= 1_000_000) return `${isaret}${dec1.format(a / 1_000_000)} M`;
-  if (a >= 10_000) return `${isaret}${dec1.format(a / 1_000)} B`;
   return `${isaret}${int0.format(Math.round(a))}`;
 }
 

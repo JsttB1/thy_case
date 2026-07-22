@@ -33,8 +33,7 @@ export const F21Capital: FC = () => {
                 innerRadius={54}
                 outerRadius={84}
                 paddingAngle={1.5}
-                stroke="none"
-              >
+                stroke="none" isAnimationActive={false}>
                 {dilimler.map((d) => (
                   <Cell key={d.ad} fill={d.renk} />
                 ))}
@@ -44,7 +43,7 @@ export const F21Capital: FC = () => {
           </ResponsiveContainer>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="eyebrow">toplam</span>
-            <span className="tnum font-display text-xl font-bold">{para(toplam)}</span>
+            <span className="tnum font-display text-xl font-extrabold tracking-[-.02em]">{para(toplam)}</span>
           </div>
         </div>
 

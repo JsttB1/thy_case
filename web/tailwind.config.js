@@ -24,7 +24,9 @@ export default {
         'sig-ok-ink': '#35C48C',
       },
       fontFamily: {
-        display: ['"Barlow Condensed"', 'Oswald', 'Impact', 'sans-serif'],
+        // Tek aile: Inter. Sıkışık grotesk (Barlow Condensed) büyük harfte ve
+        // büyük sayılarda kötü duruyordu; display ağır ağırlıkla ayrışıyor.
+        display: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },

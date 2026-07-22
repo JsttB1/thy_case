@@ -117,7 +117,7 @@ export const F22CountdownTable: FC = () => {
                     <span className="inline-flex items-center gap-2">
                       <Badge tone={durumTonu(r.geriSayim)}>{durumdanEtiket(r.geriSayim)}</Badge>
                       <span
-                        className={`tnum w-12 text-right font-display text-lg font-bold ${kalanGunRenk(
+                        className={`tnum w-12 text-right font-display text-lg font-extrabold tracking-[-.02em] ${kalanGunRenk(
                           r.kalan,
                         )}`}
                       >

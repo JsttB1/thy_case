@@ -77,7 +77,7 @@ export const F04ActionList: FC = () => {
             className="group flex h-full w-full items-start gap-3 py-3 text-left transition-colors duration-100 hover:bg-tk-mist/60"
           >
             <span
-              className={`tnum shrink-0 font-display text-lg font-bold leading-snug ${TON[a.ton]}`}
+              className={`tnum shrink-0 font-display text-lg font-extrabold tracking-[-.02em] leading-snug ${TON[a.ton]}`}
             >
               {a.sayi}
             </span>

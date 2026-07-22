@@ -99,7 +99,7 @@ export const F12MlPanel: FC = () => {
                 tick={{ fill: '#5A6472', fontSize: 11 }}
               />
               <Tooltip {...tooltipProps} formatter={(v) => [sayi(v as number, 3), 'MAE']} />
-              <Bar dataKey="mae" radius={[0, 2, 2, 0]} barSize={16}>
+              <Bar dataKey="mae" radius={[0, 2, 2, 0]} barSize={16} isAnimationActive={false}>
                 {metrikler.map((m) => (
                   // en iyi MAE vurgulanır — grafikte tek kırmızı
                   <Cell key={m.ad} fill={m.mae === enIyiMae ? '#E81932' : '#8B94A3'} />

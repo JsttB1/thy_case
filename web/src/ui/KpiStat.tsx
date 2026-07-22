@@ -80,7 +80,9 @@ export const KpiStat: FC<Props> = ({
     <div ref={ref} className="flex flex-col gap-1">
       <div className="eyebrow">{etiket}</div>
       <div
-        className={`tnum font-display text-2xl font-bold leading-none ${DEGER_TONU[tone]}`}
+        // 6 kolonluk şeritte 1024px'de kolon ~150px kalıyor; "$142,7 M" 34px'te
+        // sığmayıp kırılıyordu. Projeksiyon genişliğinde 24px, geniş ekranda 34px.
+        className={`tnum whitespace-nowrap font-display text-xl font-extrabold leading-none tracking-[-.02em] xl:text-2xl ${DEGER_TONU[tone]}`}
       >
         {gosterilen}
       </div>

@@ -40,7 +40,7 @@ export const F23RepairVsBuy: FC = () => {
     <div className="flex flex-1 flex-col">
       <div className="mb-3 flex flex-wrap items-baseline gap-x-6 gap-y-1">
         <span>
-          <span className="tnum font-display text-2xl font-bold text-tk-red">
+          <span className="tnum font-display text-2xl font-extrabold text-tk-red tracking-[-.02em]">
             {sayi(data.kpi.scrapOneriPn)}
           </span>
           <span className="ml-2 text-sm text-tk-slate">PN scrap adayı</span>

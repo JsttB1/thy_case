@@ -56,7 +56,7 @@ export const F03GrowthFallacy: FC = () => {
                 />
               </div>
               <span
-                className={`tnum w-20 shrink-0 text-right font-display text-xl font-bold ${
+                className={`tnum w-20 shrink-0 text-right font-display text-xl font-extrabold tracking-[-.02em] ${
                   c.vurgu ? 'text-tk-red' : 'text-tk-ink'
                 }`}
               >

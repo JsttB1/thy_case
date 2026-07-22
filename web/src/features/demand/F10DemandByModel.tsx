@@ -47,8 +47,8 @@ export const F10DemandByModel: FC = () => {
             iconType="square"
             iconSize={9}
           />
-          <Bar dataKey="t25" name="2025 gerçekleşen" fill="#5A6472" radius={[2, 2, 0, 0]} />
-          <Bar dataKey="t33" name="2033 projeksiyon" fill="#E81932" radius={[2, 2, 0, 0]} />
+          <Bar dataKey="t25" name="2025 gerçekleşen" fill="#5A6472" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+          <Bar dataKey="t33" name="2033 projeksiyon" fill="#E81932" radius={[2, 2, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>
     </div>
