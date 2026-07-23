@@ -28,6 +28,8 @@ sunum/*.png
 sunum/qa_png/
 sunum/deck_qa.pdf
 sunum/sablon_unpacked/
+# NOT: sunum/charts/ ve sunum/shots/ BİLEREK repoda (alt klasörler; üstteki sunum/*.png bunları
+# kapsamaz) — deste bunları gömer, klonlayan matplotlib/playwright çalıştırmadan .pptx'i üretebilir.
 
 # Büyük yerel kaynak PDF'leri — repoya alınmaz, diskte durur
 # (Grp(910.pdf: basılı case taraması ~42 MB; makale yeniden indirilebilir)

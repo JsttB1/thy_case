@@ -11,6 +11,7 @@ dependencies = [
     "tensorflow==2.21.0",   # yalnız train_demand_model.py için; Apple Silicon arm64 wheel mevcut
     "python-pptx==1.0.2",   # sunum/fill_sablon.py (resmi şablon doldurma)
     "reportlab==5.0.0",     # sunum/make_handout.py (jüri el notu PDF)
+    "matplotlib>=3.11.1",
 ]
 
 [tool.uv]

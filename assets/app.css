@@ -206,3 +206,27 @@ input[type=range]{width:100%;accent-color:var(--teal);height:4px;cursor:pointer}
 canvas{max-width:100%}
 .note{font-family:var(--fm);font-size:.68rem;color:var(--dim);background:var(--panel2);border:1px solid var(--line);
       border-radius:6px;padding:3px 8px;display:inline-block}
+
+/* ---------- sözlük ---------- */
+.dic-btn{background:var(--teal-soft);border:1px solid var(--teal-dim);color:var(--teal);border-radius:7px;
+  padding:6px 12px;font-family:var(--fm);font-size:.71rem;letter-spacing:.03em;cursor:pointer;
+  white-space:nowrap;transition:.15s}
+.dic-btn:hover{background:rgba(79,193,176,.2)}
+.dic{position:fixed;top:56px;right:16px;bottom:16px;width:430px;max-width:calc(100vw - 32px);z-index:70;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;display:none;flex-direction:column;
+  overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.6)}
+.dic.on{display:flex}
+.dic-h{padding:13px 16px;border-bottom:1px solid var(--line);background:var(--panel2);display:flex;
+  align-items:center;gap:10px}
+.dic-h b{font-family:var(--fd);font-size:.9rem}
+.dic-h small{color:var(--dim);font-size:.7rem;font-family:var(--fm)}
+.dic-h .x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:1.1rem;cursor:pointer;padding:2px 6px}
+.dic-h .x:hover{color:var(--text)}
+.dic-q{padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+.dic-q input{width:100%}
+.dic-list{flex:1;overflow-y:auto;padding:6px 16px 14px}
+.dic-row{padding:10px 0;border-bottom:1px solid var(--line-soft)}
+.dic-row:last-child{border-bottom:none}
+.dic-row .t{font-family:var(--fm);font-weight:600;color:var(--teal);font-size:.86rem}
+.dic-row .a{color:var(--dim);font-size:.74rem;font-style:italic;margin-left:7px}
+.dic-row p{margin:3px 0 0;font-size:.8rem;color:var(--muted);line-height:1.5}

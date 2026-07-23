@@ -131,7 +131,7 @@ step('W.showDetail eğri çizer (destroy dahil)', () => {
 step('PN-önekli arama eşleşir', () => {
   __APP.W.reset(); __APP.W.apply();               // önceki adımların filtrelerini temizle
   els['wQ'].value = 'PN-101741'; els['wQ']._fire('input', { target: els['wQ'] });
-  if (!els['wNote'].textContent.includes('1 PN')) throw new Error('eşleşme yok: ' + els['wNote'].textContent);
+  if (!els['wNote'].textContent.includes('1 parça')) throw new Error('eşleşme yok: ' + els['wNote'].textContent);
 });
 step('OEM preset kuculDem etkisi', () => {
   const r = __APP.senaryoHesap(__APP.PRESETS.oem);
@@ -259,6 +259,20 @@ step('mimari şeması gömülü', () => {
   if (!all.includes('Geriye dönük test')) throw new Error('backtest kartı yok');
 });
 
+
+step('sözlük — açılış, arama, kapanış', () => {
+  els['dicBtn']._fire('click', {});
+  if (!els['dicBox'].classList.contains('on')) throw new Error('sözlük açılmadı');
+  if ((els['dicList']._html.match(/dic-row/g) || []).length < 30) throw new Error('terim sayısı eksik');
+  els['dicQ'].value = 'toparlanma'; els['dicQ']._fire('input', { target: els['dicQ'] });
+  if (!els['dicList']._html.includes('TTR')) throw new Error('arama TTR bulamadı');
+  if ((els['dicList']._html.match(/dic-row/g) || []).length > 3) throw new Error('arama filtrelemedi');
+  els['dicQ'].value = 'zzzz'; els['dicQ']._fire('input', { target: els['dicQ'] });
+  if (!els['dicList']._html.includes('Eşleşme yok')) throw new Error('boş sonuç mesajı yok');
+  els['dicX']._fire('click', {});
+  if (els['dicBox'].classList.contains('on')) throw new Error('sözlük kapanmadı');
+});
+
 /* Türkçe format akıl sağlığı */
 step('tr-TR sayı formatı', () => {
   if (__APP.fmt(90016) !== '90.016') throw new Error(__APP.fmt(90016));
@@ -268,10 +282,10 @@ step('tr-TR sayı formatı', () => {
 /* runtime string doğrulamaları */
 step('render: BER virgül + $12,1M + ROI', () => {
   const all = Object.values(els).map(e => e._html).join(' ') + ' ' + injected.join(' ');
-  if (!all.includes('BER 0,65')) throw new Error('footer BER 0,65 render edilmedi');
+  if (!all.includes('BER eşiği 0,65')) throw new Error('footer BER eşiği 0,65 render edilmedi');
   if (!all.includes('$12,1M')) throw new Error('$12,1M render edilmedi');
   if (all.includes('12,2M')) throw new Error('12,2M hâlâ görünüyor');
-  if (!all.includes("%72,9'u")) throw new Error("72,9'u eki render edilmedi");
+  if (!all.includes("%39,2'si")) throw new Error("39,2'si eki render edilmedi");
 });
 
 console.log('\ncharts oluşturuldu:', charts.length);

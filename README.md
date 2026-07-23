@@ -37,7 +37,11 @@ uv run build_dashboard.py
 
 ```bash
 cd sunum
-uv run fill_sablon.py                # → Grup3_Komponent_Kontrol_Kulesi.pptx (RESMİ şablon, 7 slayt limiti)
+# S4 ekran görüntüleri shots/ içinde hazır gelir; yeniden almak istersen (tek seferlik):
+#   uv run --with playwright playwright install chromium
+#   uv run --with playwright python make_shots.py
+uv run make_charts.py                # → charts/*.png (marka grafikler; S2·S5·S6'ya gömülür)
+uv run fill_sablon.py                # → Grup9_Komponent_Kontrol_Kulesi.pptx (RESMİ şablon, 7 slayt; grafik + ekranları gömer)
 node make_deck.js                    # → kontrol_kulesi_sunum.pptx (11 slaytlık geniş yedek deste)
 uv run make_handout.py               # → kontrol_kulesi_el_notu.pdf (2 sayfa jüri el notu)
 ```
@@ -57,6 +61,9 @@ uv run train_demand_model.py    # TensorFlow/Keras hibrit model → demand_model
 ```
 
 `train_demand_model.py` çıktısı varsa dashboard AI bölümünü otomatik doldurur; yoksa uyarı gösterir.
+
+Üst bardaki **📖 Sözlük** düğmesi, ekranlardaki tüm kısaltmaların (PN, AOG, TAT, TTS/TTR, CLP, FMV,
+BER, SBA, cold-start…) aranabilir Türkçe açıklamalarını açar — jüri veya ekip üyesi terim takılırsa tek tık.
 
 ## Dosyalar
 

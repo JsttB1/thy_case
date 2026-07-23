@@ -15,11 +15,13 @@
 - **Case başlığı:** *"Filo Büyür, Envanter Hazır Mı?"* — bakım kapasitesi 1.200 → 2.000 uçağa
   (2025 → 2033) çıkarken komponent envanter yönetiminin buna hazır olup olmadığı; değilse
   Turkish Technology'nin (IT şirketi) sunacağı çözüm.
-- **Takım:** Grup 3/10. AI kullanımı serbest. **Tüm veriler sentetik/dummy** (resmi case verisi,
+- **Takım:** Grup 9/10. AI kullanımı serbest. **Tüm veriler sentetik/dummy** (resmi case verisi,
   gerçek THY/AMOS verisi değil) — çıktılarda "sentetik/temsili" etiketi kullanılıyor.
 - **Çözüm konsepti:** **Komponent Kontrol Kulesi** — "uçaklar için kule var, komponentler için
-  yok." Seçenek D olarak yarışıyoruz; A (dashboard), B (sistem mimarisi) ve C (akıllı uyarı)
-  seçeneklerinin üçünü tek çatıda topluyor.
+  yok." case'teki A (dashboard), B (sistem mimarisi) ve C (akıllı uyarı) başlıkları
+  yönlendirici ÖRNEKLERDİR (tek seçim zorunluluğu yok); önerimiz üçünü tek çatıda birleştirir.
+  NOT (Tem 2026): eski "Seçenek D" etiketi sunumlardan çıkarıldı — var olmayan bir şık icat etmek
+  jüride brief'i yanlış anlama izlenimi verebilirdi; iddia artık doğrudan söyleniyor.
 
 ### 1.1 Sunum rubriği (case Bölüm 4 — jürinin puanlama çerçevesi)
 1. **Problemin Tanımlanması** — filo büyümesinin envantere getirdiği en kritik sorun, neden önemli

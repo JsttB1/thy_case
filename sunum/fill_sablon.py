@@ -2,12 +2,12 @@
 """Resmi Global Talent Bridge şablonunu (7 slayt, 20×11,25") proje içeriğiyle doldurur.
 Şablon tasarımına DOKUNULMAZ: mevcut metin kutularında run düzeyinde değişiklik yapılır
 (biçim korunur); boş slaytlara marka diline uygun kutular eklenir.
-Çalıştırma: uv run fill_sablon.py → Grup3_Komponent_Kontrol_Kulesi.pptx"""
+Çalıştırma: uv run fill_sablon.py → Grup9_Komponent_Kontrol_Kulesi.pptx"""
 import copy, json, os
 from pptx import Presentation
-from pptx.util import Inches, Pt
+from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
-from pptx.enum.text import PP_ALIGN
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 D = json.load(open(os.path.join(HERE, 'deck_data.json'), encoding='utf-8'))
@@ -27,15 +27,33 @@ CIZGI = RGBColor(0x6C, 0x47, 0x95)
 prs = Presentation(os.path.join(HERE, 'sablon.pptx'))
 S = list(prs.slides)
 
+FONT = 'Arial'   # Poppins bu makinede/çoğu makinede kurulu değil; Arial Türkçe'yi her yerde doğru gösterir
+
+CH = os.path.join(HERE, 'charts')   # make_charts.py çıktıları (marka grafikler)
+SH = os.path.join(HERE, 'shots')    # make_shots.py çıktıları (dashboard ekran görüntüleri)
+
+
+def resim_ekle(slide, dosya, x, y, w, h, cerceve=True):
+    """PNG'yi verilen inç kutusuna bozmadan gömer; dosya yoksa sessizce atlar (deste yine üretilir)."""
+    if not os.path.exists(dosya):
+        print('  ! görsel atlandı (yok):', os.path.relpath(dosya, HERE))
+        return None
+    pic = slide.shapes.add_picture(dosya, Inches(x), Inches(y), Inches(w), Inches(h))
+    if cerceve:
+        pic.line.color.rgb = CIZGI
+        pic.line.width = Pt(0.75)
+    return pic
+
 def run_yaz(tf, yeni_satirlar):
     """Metin çerçevesindeki DOLU paragrafları sırayla yeni satırlarla değiştirir;
-    fazla kalan dolu paragraflar boşaltılır. Biçim (font/renk) korunur."""
+    fazla kalan dolu paragraflar boşaltılır. Renk/boyut korunur, font Arial'a çevrilir."""
     i = 0
     for p in tf.paragraphs:
         if not p.runs:
             continue
         yeni = yeni_satirlar[i] if i < len(yeni_satirlar) else ''
         p.runs[0].text = yeni
+        p.runs[0].font.name = FONT
         for r in p.runs[1:]:
             r.text = ''
         i += 1
@@ -74,7 +92,7 @@ def kutu_ekle(slide, x, y, w, h, satirlar, panel=False):
 def notlar(slide, metin):
     slide.notes_slide.notes_text_frame.text = metin
 
-PB, PSB, PR, PL = 'Poppins Bold', 'Poppins Semi-Bold', 'Poppins', 'Poppins Light'
+PB, PSB, PR, PL = FONT, FONT, FONT, FONT   # ağırlık, kutu_ekle'deki bold bayrağıyla verilir
 
 # ============ S1 · KAPAK ============
 S[0].shapes.title.text_frame.paragraphs[0].runs[0].text if S[0].shapes.title.text_frame.paragraphs[0].runs else None
@@ -84,42 +102,41 @@ if tf.paragraphs[0].runs:
 else:
     tf.text = 'Komponent Kontrol Kulesi'
 kutu_ekle(S[0], 10.15, 6.35, 8.9, 2.4, [
-    ('Filo Büyür, Envanter Hazır mı? — Seçenek D · Grup 3', 20, LILA, False, PSB),
-    ('Uçaklar için kule var, komponentler için yok: 5.000 parça için', 15, SOLUK, False, PL),
-    ('görünürlük + öngörü + aksiyon karar katmanı.', 15, SOLUK, False, PL),
-    ('1.200 → 2.000 uçak · talep bandı +%63–68 · tüm veriler sentetik/temsili', 13, PEMBE, False, PR),
+    ('Filo Büyür, Envanter Hazır mı?  ·  Grup 9', 20, LILA, False, PSB),
+    ('Uçaklar için bir kontrol kulesi var, komponentler için yok.', 15, SOLUK, False, PL),
+    ('5.000 parça için görünürlük, öngörü ve aksiyon katmanı.', 15, SOLUK, False, PL),
+    ('1.200 uçaktan 2.000 uçağa giden yol. Tüm veriler sentetiktir.', 13, PEMBE, False, PR),
 ])
-notlar(S[0], 'Açılış: tek cümlede konsept — uçaklar için kule var, komponentler için yok. Filo %67 büyürken talep +%63–68 bandında; asıl kırılma göç. Hepsi üç resmi CSV\'den, yeniden üretilebilir.')
+notlar(S[0], 'Konsepti tek cümlede veriyoruz: uçaklar için bir kontrol kulesi var, komponentler için yok. Filo %67 büyürken talep %63 ile %68 arası artıyor. Asıl kırılma büyümede değil, talebin yer değiştirmesinde. Bütün sayılar üç resmi veri setinden geliyor ve yeniden üretilebilir.')
 
 # ============ S2 · PROBLEM + BOŞLUK ============
-bul(S[1], 'Title 51').text_frame.paragraphs[0].runs[0].text = 'Problem: Büyüme Değil, Göç — ve Süreç Alarmı Göremiyor'
+bul(S[1], 'Title 51').text_frame.paragraphs[0].runs[0].text = 'Problem: Büyüme Değil, Talebin Yer Değiştirmesi'
 kutu_ekle(S[1], 0.6, 2.15, 9.0, 8.6, [
-    ('Talep: 90.016 → 146,9–150,8 bin adet/yıl (+%63–68 bandı)', 17, BEYAZ, True, PSB),
-    ('İki bağımsız yöntem, şeffaf varsayımlar; nokta tahmin yok.', 14, LILA, False, PL),
-    ('Yeni nesil payı %34 → %65 — talebin üçte ikisi yer değiştiriyor', 17, BEYAZ, True, PSB),
-    ('Geçmişi olmayan parçalar ana senaryo: cold-start merkez modül.', 14, LILA, False, PL),
-    ('Kategori ayrışması: Oxygen +%40, Electrical Power +%91', 17, BEYAZ, True, PSB),
-    ('Tek çarpanlı plan iki uçta da yanılır; kategori × model × segment şart.', 14, LILA, False, PL),
-    ('Saha: ~9 başkanlık · 4–5 kopuk kayıt sistemi', 17, BEYAZ, True, PSB),
-    ('Bozulan parça için süreç reaktif bir telefon merdiveni; her devirde veri kopuyor.', 14, LILA, False, PL),
-    ('Dürüstlük: THY 130,1 · pool 35,7 adet/uçak-yıl (3,6 kat fark)', 17, BEYAZ, True, PSB),
-    ('Anomaliyi gizlemedik, mentora taşıdık; sistemde oran sabit değil, parametre.', 14, LILA, False, PL),
+    ('Asıl mesele büyüme değil', 17, BEYAZ, True, PSB),
+    ('2033 talebi bugüne göre %63 ile %68 arası artıyor. Kritik olan bu değil.', 14, LILA, False, PL),
+    ('Talebin üçte ikisi yeni parçalara kayıyor', 17, BEYAZ, True, PSB),
+    ('Yeni nesil modellerin payı %34’ten %65’e çıkıyor. Bu parçaların çoğunun geçmiş verisi yok.', 14, LILA, False, PL),
+    ('Kategoriler farklı hızda büyüyor', 17, BEYAZ, True, PSB),
+    ('Bir kategori %40 artarken bir diğeri %91 artıyor. Tek bir katsayıyla plan yapılamaz.', 14, LILA, False, PL),
+    ('Kayıtlar dağınık, süreç görünmüyor', 17, BEYAZ, True, PSB),
+    ('Bir parça yaklaşık 9 başkanlıktan geçiyor ve 4-5 ayrı sisteme kaydediliyor. Her geçişte veri kopuyor.', 14, LILA, False, PL),
 ])
 kutu_ekle(S[1], 10.6, 2.5, 8.2, 2.75, [
-    (str(K['siparissiz']) + ' PN', 60, PEMBE, True, PB),
-    ('bugün kırmızıda — stoku toparlanma süresinden önce bitecek — ve', 15, BEYAZ, False, PR),
-    ("açık siparişi YOK. 11'i uçak yerde bırakan (AOG) kritik parça.", 15, BEYAZ, False, PR),
+    (str(K['siparissiz']) + ' parça', 54, PEMBE, True, PB),
+    ('stoğu tükenmek üzere ama hiç sipariş açılmamış.', 15, BEYAZ, False, PR),
+    ('Bunların 11’i, yokluğunda uçağı yerde bırakan kritik parça.', 15, BEYAZ, False, PR),
 ], panel=True)
 kutu_ekle(S[1], 10.6, 5.95, 8.2, 3.1, [
-    ('Toplam kırmızı: ' + str(K['kirmizi']) + ' PN · kapatma maliyeti yalnız ' + tr1(K['kapatma']) + ' M$', 15, AMBER, True, PSB),
-    ('Fazla + ölü stok ~0,4 M$ — “şişkin envanter” miti veriyle çürüdü.', 14, LILA, False, PL),
-    ('Sorun para değil; azaldığını kimsenin görmemesi.', 15, BEYAZ, True, PSB),
-    ('1.200 uçakta el yordamıyla tutan denge, 2.000 uçakta tutmaz.', 14, LILA, False, PL),
+    ('Stoğu riske giren toplam ' + str(K['kirmizi']) + ' parça var.', 15, AMBER, True, PSB),
+    ('Hepsini yerine koymak yalnızca ' + tr1(K['kapatma']) + ' M$. Yani sorun para değil.', 14, LILA, False, PL),
+    ('Sorun, stoğun azaldığını kimsenin görememesi.', 15, BEYAZ, True, PSB),
+    ('Bugün elle tutulan bu denge, 2.000 uçakta tutmaz.', 14, LILA, False, PL),
 ], panel=True)
-notlar(S[1], 'Rubrik 1+2 tek slaytta: problem (göç) + mevcut boşluk (72 siparişsiz kırmızı = alarmı hesaplayan süreç yok). Boşluğu nasıl bulduk: TTS<TTR koşulunu resmi stok verisiyle ilk kez biz hesapladık.')
+notlar(S[1], 'Problem ve mevcut boşluğu birlikte veriyoruz. 72 parçanın stoğu bitmek üzere ve sipariş bile açılmamış. Bu, azalmayı hesaplayan bir sürecin olmadığının kanıtı. Bu durumu resmi stok verisiyle ilk kez biz ölçtük.')
+resim_ekle(S[1], os.path.join(CH, 's2_goc.png'), 0.6, 5.6, 8.5, 3.97, cerceve=False)
 
 # ============ S3 · ÇÖZÜM AKIŞI (6 adım) ============
-bul(S[2], 'Title 26').text_frame.paragraphs[0].runs[0].text = 'Çözüm: Kontrol Kulesi — Uçtan Uca Karar Katmanı'
+bul(S[2], 'Title 26').text_frame.paragraphs[0].runs[0].text = 'Çözüm: Uçtan Uca Bir Karar Katmanı'
 etiketler = ['BAĞLAN', 'BİRLEŞTİR', 'ÖNGÖR', 'UYAR', 'HAREKETE GEÇ', 'PROVA ET']
 govdeler = [
     ['CDC ile salt-okunur', 'AMOS/TRAX değişmez', 'geri yazma yok', 'sıfır entegrasyon riski'],
@@ -133,98 +150,107 @@ for ad, met in zip(['TextBox 69', 'TextBox 71', 'TextBox 73', 'TextBox 75', 'Tex
     run_yaz(bul(S[2], ad).text_frame, [met])
 for ad, sat in zip(['TextBox 88', 'TextBox 89', 'TextBox 90', 'TextBox 93', 'TextBox 92', 'TextBox 91'], govdeler):
     run_yaz(bul(S[2], ad).text_frame, sat)
-notlar(S[2], 'Üç katman (görünürlük/öngörü/aksiyon) altı adımda: bağlan-birleştir Faz 1, öngör-uyar Faz 2, harekete geç-prova et Faz 2–3. Kapılar takvim değil metrik. Kritik cümle: hiçbir kaynağa yazmıyoruz.')
+notlar(S[2], 'Üç katmanı altı adımda anlatıyoruz. Bağlan ve birleştir ilk faz, öngör ve uyar ikinci faz, harekete geç ve prova et sonraki faz. Fazlar arası geçiş tarihe değil metriğe bağlı. En önemli nokta: mevcut sistemlere hiçbir şey yazmıyoruz, sadece okuyoruz.')
 
 # ============ S4 · PROTOTİP (6 kart) ============
 bul(S[3], 'Title 74').text_frame.paragraphs[0].runs[0].text = 'Prototip: Tek Dosyalık Canlı Dashboard'
 for ad in ('TextBox 40', 'TextBox 41', 'TextBox 42', 'TextBox 43'):   # şablondaki örnek metinleri boşalt
     run_yaz(bul(S[3], ad).text_frame, [])
 kartlar = [
-    ('Kokpit', '132,9 M$ sermaye fotoğrafı; üç para musluğu; 72 siparişsiz kırmızı vurgusu; mimari şeması + faz yol haritası.'),
-    ('Watchlist', '5.000 PN risk skoru sıralı; 8 filtre; PN detayında aksiyon merdiveni (süre+maliyet) ve canlı stok-out eğrisi.'),
-    ('Öngörü & AI', 'Bant projeksiyonu; tahmin gezgini; hata analizi; cold-start canlı Bayes demosu; hurda anomali dedektörü (159 PN).'),
-    ('Harita', '16 yurt içi havalimanı (gerçek kontur) + İstanbul merkezli küresel ağ (9 hub); kriz katmanı; tamir akış okları.'),
-    ('Senaryo & Jüri Modu', 'Kriz kütüphanesi tek tıkla 5.000 PN yeniden hesaplar; kritiklik ağırlığı/BER/tampon kaydırıcıları canlı.'),
-    ('Doğrulanmış Çekirdek', 'Float %97 (8.012 tahmin, 7.800 saha) · skor birincisi sahada kırmızı · backtest %0,4 · Monte Carlo uyumu %99,5 · 26 grafik · internetsiz.'),
+    ('Kokpit', 'Envanter, para kalemleri, 72 uyarı', 'kokpit.png'),
+    ('Watchlist', '5.000 parça riske göre sıralı', 'watch.png'),
+    ('Öngörü & AI', 'Projeksiyon + canlı tahmin', 'ongoru.png'),
+    ('Harita', '25 istasyon, krizin ağa etkisi', 'harita.png'),
+    ('Senaryo ve Jüri Modu', 'Krizi tek tıkla uygula', 'senaryo.png'),
+    ('Doğrulanmış Çekirdek', 'Float %97, geri test binde 4', 'cekirdek.png'),
 ]
 gruplar = ['Group 50', 'Group 59', 'Group 62', 'Group 65', 'Group 68', 'Group 71']
-for g, (baslik, govde) in zip(gruplar, kartlar):
+for g, (baslik, alt, shot) in zip(gruplar, kartlar):
     grp = bul(S[3], g)
+    gx, gy = Emu(grp.left).inches, Emu(grp.top).inches
     tbs = [sh for sh in grp.shapes if sh.has_text_frame]
     run_yaz(tbs[0].text_frame, [baslik])
-    run_yaz(tbs[1].text_frame, [govde])
-notlar(S[3], 'Demo bu beş ekranda; altıncı kart güven kartı. Tek HTML dosyası — USB\'den açılır, salon ağına muhtaç değiliz. Her sayı python ile yeniden üretilir (deterministik).')
+    run_yaz(tbs[1].text_frame, [alt])
+    tbs[1].text_frame.vertical_anchor = MSO_ANCHOR.TOP
+    resim_ekle(S[3], os.path.join(SH, shot), gx + 0.37, gy + 0.98, 3.90, 2.06)
+notlar(S[3], 'Canlı demoyu bu beş ekranda yapıyoruz, altıncı kart güven veren kart. Dashboard tek bir HTML dosyası, USB’den açılıyor ve salon ağına ihtiyaç duymuyor. Her sayı koddan yeniden üretilebiliyor.')
 
 # ============ S5 · YAPAY ZEKÂ ============
 bul(S[4], 'Title 28').text_frame.paragraphs[0].runs[0].text = 'Yapay Zekâ: Hibrit ve Dürüst'
 kutu_ekle(S[4], 0.6, 2.2, 9.2, 8.4, [
-    ('λ = istatistiksel taban × e^(ağ düzeltmesi)', 19, PEMBE, True, PB),
-    ('MLP 128-64-32 · 54 özellik · 10.000 örnek · Poisson kaybı', 14, LILA, False, PL),
-    ('3 tohumlu topluluk; en iyi epoch geri yüklenir; deterministik.', 14, LILA, False, PL),
-    ('Parça düzeyinde talep kesikli: medyan 11 adet/yıl, %14,6 sıfır çeyrek', 16, BEYAZ, True, PSB),
-    ('→ tekil parçada Croston/SBA + Poisson emniyet stoğu; ağ bugün öneri modunda.', 14, LILA, False, PL),
-    ('Cold-start ana senaryo (talebin ~%65’i geçmişsiz parçaya kayıyor)', 16, BEYAZ, True, PSB),
-    ('→ öncül analog gruptan + üretici MTBUR; gözlemle Bayes güncellemesi.', 14, LILA, False, PL),
+    ('İstatistik temel, yapay zekâ üstüne düzeltme', 19, PEMBE, True, PB),
+    ('Ağ, istatistiksel tahminin üzerine çarpan bir düzeltme öğreniyor. Az veriyle bu yaklaşım daha kararlı kalıyor.', 14, LILA, False, PL),
+    ('Parça talebi çok kesikli, medyanı yılda 11 adet', 16, BEYAZ, True, PSB),
+    ('Bu yüzden tekil parçada klasik yöntemler kullanılıyor. Ağ şimdilik sadece öneri veriyor, kararı vermiyor.', 14, LILA, False, PL),
+    ('Yeni parçaların geçmişi yok, 2033 talebinin %65’i bunlarda', 16, BEYAZ, True, PSB),
+    ('Tahmine benzer parçalardan başlıyoruz. Gerçek veri geldikçe model o parçaya yakınsıyor.', 14, LILA, False, PL),
 ])
 kutu_ekle(S[4], 10.6, 2.5, 8.2, 2.55, [
     ('%16,3 → %0,4', 44, PEMBE, True, PB),
-    ('Geriye dönük test: Q3 toplamı yalnız Q1–Q2 ile tahmin edildi;', 14, BEYAZ, False, PR),
-    ('mevsim katsayısı (×1,20) toplam hatayı binde dörde indirdi.', 14, BEYAZ, False, PR),
+    ('Modeli görmediği bir çeyrekle sınadık. Yılın ilk yarısıyla üçüncü', 14, BEYAZ, False, PR),
+    ('çeyreği tahmin etti ve toplam hata binde dörde indi.', 14, BEYAZ, False, PR),
 ], panel=True)
 kutu_ekle(S[4], 10.6, 5.75, 8.2, 3.0, [
     ('Dört bağımsız doğrulama', 16, AMBER, True, PSB),
-    ('float %97 (8.012 tahmin, 7.800 saha) · risk skoru 1.si fiilen kırmızı', 14, LILA, False, PL),
-    ('backtest %0,4 · Monte Carlo (800 deneme) kapalı formla %99,5 uyum', 14, LILA, False, PL),
-    ('Slider, senaryo ve optimizasyon aynı doğrulanmış çekirdekte koşar.', 14, BEYAZ, True, PSB),
+    ('Float tahmini sahayla %97 uyumlu. Risk sıralamasının birincisi gerçekten stokta riskli.', 14, LILA, False, PL),
+    ('Geri test binde 4 hata verdi. Simülasyon, formülle %99,5 uyum gösterdi.', 14, LILA, False, PL),
+    ('Kaydırıcılar, senaryolar ve optimizasyon hep bu doğrulanmış çekirdekte çalışıyor.', 14, BEYAZ, True, PSB),
 ], panel=True)
-notlar(S[4], 'Dürüstlük stratejisi: 4 çeyrekle sinir ağı klasikleri geçemez — bunu biz söylüyoruz; sezon 8+ çeyrek ister. Ama toplam düzeyde binde 4. AI bugün öneri modunda; AMOS olay verisi bağlanınca değeri açılır.')
+notlar(S[4], 'Burada dürüst davranıyoruz. Sadece 4 çeyrek veriyle sinir ağı klasik yöntemleri geçemez, çünkü mevsimi öğrenmek için 8 çeyrekten fazla veri gerekir. Ama toplam düzeyde hata binde 4. Yapay zekâ bugün öneri modunda, AMOS olay verisi bağlanınca gerçek değerini gösterecek.')
+resim_ekle(S[4], os.path.join(CH, 's5_backtest.png'), 0.6, 4.9, 8.4, 2.52, cerceve=False)
 
 # ============ S6 · ÖNCELİKLENDİRME · KRİZ · BAŞARI ============
-bul(S[5], 'Title 51').text_frame.paragraphs[0].runs[0].text = 'Önceliklendirme · Kriz Dayanıklılığı · Başarı Ölçütleri'
+bul(S[5], 'Title 51').text_frame.paragraphs[0].runs[0].text = 'Önceliklendirme, Kriz Dayanıklılığı ve Başarı Ölçütü'
 kutu_ekle(S[5], 0.6, 2.3, 5.9, 7.6, [
-    ('ÖNCE NE? (kısıtlı bütçe)', 15, PEMBE, True, PB),
-    ('Üç musluk: ' + tr1(K['scrap']) + ' M$/yıl hurda · ' + tr1(K['float_fmv']) + '→' + tr1(K['float_33']) + ' M$ döngü · ' + tr1(K['phaseout']) + ' M$ phase-out', 13.5, LILA, False, PL),
-    ('Sınır eğrisi: her alım $ başına risk azaltımıyla sıralı — ilk milyonlar en dik.', 13.5, LILA, False, PL),
-    ('Kabiliyet yatırımı (547 PN): ' + tr1(K['kab_tasarruf']) + ' M$/yıl + ' + tr1(K['kab_sermaye']) + ' M$ serbesti.', 13.5, BEYAZ, True, PSB),
-    ('Duyarlılık: en büyük kaldıraç TAT (±%20 → 23,2–44,8 M$).', 13.5, LILA, False, PL),
-    ('Faz 1 salt-okunur: ilk gün 72 yakalanır; kapılar metrikle.', 13.5, LILA, False, PL),
-    ('Gayrifaal kuyruğu: 8,5 M$ tamirle 13,9 M$ değer (BER ayıklanarak).', 13.5, LILA, False, PL),
-    ('Hurda anomalisi: 159 PN kalite/karar incelemesine.', 13.5, LILA, False, PL),
+    ('ÖNCE NE YAPMALI?', 15, PEMBE, True, PB),
+    ('Üç büyük para kalemi var: yılda ' + tr1(K['scrap']) + ' M$ hurda, ' + tr1(K['float_fmv']) + ' M$ tamir döngüsü ve ' + tr1(K['phaseout']) + ' M$ emekli filo stoğu.', 13.5, LILA, False, PL),
+    ('Her alım, harcanan para başına en çok riski azaltana göre sıralanıyor. İlk milyonlar en çok işe yarıyor.', 13.5, LILA, False, PL),
+    ('Atölye kabiliyeti yatırımı 547 parçada yılda ' + tr1(K['kab_tasarruf']) + ' M$ tasarruf getiriyor.', 13.5, BEYAZ, True, PSB),
+    ('En büyük etken tedarik süresi. Yüzde 20 değişince maliyet 23 ile 45 M$ arasında oynuyor.', 13.5, LILA, False, PL),
+    ('İlk faz sadece görünürlük. Daha ilk gün stoğu biten 72 parça yakalanıyor.', 13.5, LILA, False, PL),
 ], panel=True)
 kutu_ekle(S[5], 7.15, 2.3, 5.9, 7.6, [
-    ('KRİZ = PARAMETRE ŞOKU', 15, PEMBE, True, PB),
-    ('TTS kısalır ya da TTR uzar; stres testi motorun üstünde bir düğme.', 13.5, LILA, False, PL),
-    ('Motor ailesi krizi (canlı): kırmızı 134 → 477 PN.', 13.5, BEYAZ, True, PSB),
-    ('Monte Carlo aynı senaryoda: ' + tr0(MC['motor']['acik_ort']) + ' PN · ' + tr1(MC['motor']['ek_ort']) + ' M$ ek ihtiyaç.', 13.5, LILA, False, PL),
-    ('Kütüphane: pandemi · OEM gecikmesi · lojistik · kur şoku.', 13.5, LILA, False, PL),
-    ('Playbook önceden yazılır; çeyreklik war-game ile prova edilir.', 13.5, LILA, False, PL),
-    ('Kıtlık sensörü: FMV/CLP oranı (medyan 0,43) kalıcı yükselirse erken uyarı.', 13.5, LILA, False, PL),
-    ('Dayanıklılık göstergeleri kokpitte: TTS dağılımı + kırmızı sayacı.', 13.5, LILA, False, PL),
+    ('KRİZ BİR AYAR DEĞİŞİKLİĞİDİR', 15, PEMBE, True, PB),
+    ('Her kriz ya stoğun dayanma süresini kısaltır ya da tedarik süresini uzatır. İkisi de birer ayar.', 13.5, LILA, False, PL),
+    ('Motor ailesi krizini canlı deniyoruz. Riskli parça sayısı 134’ten 477’ye çıkıyor.', 13.5, BEYAZ, True, PSB),
+    ('Simülasyon aynı senaryoda ' + tr0(MC['motor']['acik_ort']) + ' parça ve ' + tr1(MC['motor']['ek_ort']) + ' M$ ek ihtiyaç gösteriyor.', 13.5, LILA, False, PL),
+    ('Kütüphanede pandemi, OEM gecikmesi, lojistik ve kur şoku senaryoları hazır.', 13.5, LILA, False, PL),
+    ('Kriz planı önceden yazılıyor ve her çeyrek bir senaryo prova ediliyor.', 13.5, LILA, False, PL),
 ], panel=True)
 kutu_ekle(S[5], 13.7, 2.3, 5.6, 7.6, [
-    ('NASIL ÖLÇERİZ?', 15, PEMBE, True, PB),
-    ("AOG'da bekleyen uçak oranı ↓ — ana metrik (her saat gelir kaybı).", 13.5, BEYAZ, True, PSB),
-    ('Siparişsiz kırmızı: ' + str(K['siparissiz']) + ' → 0 (alarm-aksiyon bağı zorunlu).', 13.5, LILA, False, PL),
-    ('Kritik parça karşılama ≥ %97–98 · erken yakalama oranı ↑.', 13.5, LILA, False, PL),
-    ('MAPE + öneri kabulü: faz kapıları bu eşiklerle açılır.', 13.5, LILA, False, PL),
-    ('Bağlı sermaye guard-rail: servis, sermaye şişirerek değil TAT kısaltarak.', 13.5, LILA, False, PL),
-    ('Expedite maliyeti ↓: erken yakalanan alarm ucuz kanaldan çözülür.', 13.5, LILA, False, PL),
-    ('Hurda oranı %11,1 izlenir; BER kuralı 67,8 M$/yıl musluğun vanası.', 13.5, LILA, False, PL),
+    ('BAŞARIYI NASIL ÖLÇERİZ?', 15, PEMBE, True, PB),
+    ('Ana ölçüt, parça yüzünden yerde bekleyen uçak oranının düşmesi. Her saati gelir kaybı.', 13.5, BEYAZ, True, PSB),
+    ('Stoğu biten ama siparişi olmayan parça sayısı sıfıra iniyor. Her uyarı bir aksiyona bağlanıyor.', 13.5, LILA, False, PL),
+    ('Kritik parça karşılama oranı %97-98’in üstünde tutuluyor.', 13.5, LILA, False, PL),
+    ('Otomasyona geçiş, tahmin doğruluğu ve öneri kabul oranı eşiğine bağlı.', 13.5, LILA, False, PL),
+    ('Servis, stok şişirilerek değil tedarik süresi kısaltılarak korunuyor.', 13.5, LILA, False, PL),
 ], panel=True)
-notlar(S[5], 'Rubrik 5+6 + vizyonun kriz sütunu tek slaytta. Sayı ezberi: 67,8 / 23,3→39,0 / 52,0 M$ · 12,1+4,0 · 134→477 · 796/39,4 M$ · 72→0.')
+notlar(S[5], 'Bu slayt önceliklendirmeyi, kriz dayanıklılığını ve başarı ölçütlerini birlikte veriyor. Akılda kalması gerekenler: üç para kalemi 67,8, 23,3 ve 52 M$. Kabiliyet yatırımı yılda 12,1 M$. Motor krizinde riskli parça 134’ten 477’ye çıkıyor.')
+resim_ekle(S[5], os.path.join(CH, 's6_taps.png'), 1.10, 6.2, 4.90, 3.03, cerceve=False)
+resim_ekle(S[5], os.path.join(CH, 's6_kriz.png'), 7.65, 6.2, 4.90, 3.03, cerceve=False)
+resim_ekle(S[5], os.path.join(CH, 's6_basari.png'), 14.15, 6.2, 4.70, 3.01, cerceve=False)
 
 # ============ S7 · KAPANIŞ ============
 kutu_ekle(S[6], 1.2, 1.7, 17.6, 3.6, [
-    ('“2033’e daha büyük bir depoyla değil; her parçanın görünür, her kararın kurallı,', 24, BEYAZ, False, PSB),
-    ('her planın parametrik ve her krizin önceden prova edilmiş olduğu', 24, BEYAZ, False, PSB),
-    ('bir işletim modeliyle gidilir.”', 24, BEYAZ, False, PSB),
-    ('Kontrol Kulesi, bu modelin yazılım hâlidir.', 19, PEMBE, True, PB),
+    ('“2033’e daha büyük bir depoyla değil, her parçanın görünür,', 24, BEYAZ, False, PSB),
+    ('her kararın kurallı, her planın esnek ve her krizin önceden', 24, BEYAZ, False, PSB),
+    ('prova edilmiş olduğu bir işletim modeliyle gidiyoruz.”', 24, BEYAZ, False, PSB),
+    ('Kontrol Kulesi, bu modelin yazılım hâli.', 19, PEMBE, True, PB),
 ])
 kutu_ekle(S[6], 1.2, 9.55, 17.6, 0.9, [
-    ('Canlı demo ve tüm sayıların yeniden üretimi için hazırız  ·  Grup 3', 15, LILA, False, PL),
+    ('Canlı demo ve tüm sayıların yeniden üretimi için hazırız  ·  Grup 9', 15, LILA, False, PL),
 ])
-notlar(S[6], 'Kapanış cümlesi ezber. Sorulara geçilir; el notunun 2. sayfasında 8 hazır cevap var.')
+notlar(S[6], 'Kapanış cümlesini net söyleyip sorulara geçiyoruz. El notunun ikinci sayfasında sık gelen sorular için hazır cevaplar var.')
 
-cikti = os.path.join(HERE, 'Grup3_Komponent_Kontrol_Kulesi.pptx')
+# Başlık kutularını Poppins'ten Arial'a çevir (Türkçe her yerde doğru görünsün)
+for s in S:
+    for sh in s.shapes:
+        if sh.has_text_frame and sh.name.startswith('Title'):
+            for p in sh.text_frame.paragraphs:
+                for r in p.runs:
+                    r.font.name = FONT
+                    r.font.bold = True
+
+cikti = os.path.join(HERE, 'Grup9_Komponent_Kontrol_Kulesi.pptx')
 prs.save(cikti)
 print('✓', os.path.basename(cikti), 'yazıldı —', len(S), 'slayt (limit 7)')

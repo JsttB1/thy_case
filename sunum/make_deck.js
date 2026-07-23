@@ -57,7 +57,7 @@ const SENT = 'Tüm veriler sentetik / temsili resmi case setleridir — gerçek 
 /* ================= 1 · KAPAK ================= */
 {
   const s = base('Açılış: tek cümlede konsept — uçaklar için kule var, komponentler için yok. Sayılar ekranda: filo %67 büyürken talep bandı +%63–68. Hepsi üç resmi CSV\'den hesaplandı ve yeniden üretilebilir.');
-  eyebrow(s, 0.55, 0.85, 'GLOBAL TALENT BRIDGE · FİLO BÜYÜR, ENVANTER HAZIR MI? · SEÇENEK D');
+  eyebrow(s, 0.55, 0.85, 'GLOBAL TALENT BRIDGE · FİLO BÜYÜR, ENVANTER HAZIR MI? · GRUP 9');
   s.addText('Komponent Kontrol Kulesi', { x: 0.55, y: 1.35, w: 12.2, h: 1.1, fontFace: F.h,
     fontSize: 48, bold: true, color: C.text, margin: 0 });
   s.addText('Uçaklar için kule var, komponentler için yok. 5.000 parça numarası için görünürlük + öngörü + aksiyon katmanı — kayıt sistemlerinin üzerine, hiçbirine yazmadan.',
@@ -66,7 +66,7 @@ const SENT = 'Tüm veriler sentetik / temsili resmi case setleridir — gerçek 
   chip(s, { x: 0.55, y: y0, w: cw, h: 1.5, v: '1.200 → 2.000', l: 'uçak, 2025 → 2033 (+%67) — bakım kapasitesi hedefi', vc: C.teal, vsize: 26 });
   chip(s, { x: 0.55 + cw + 0.2, y: y0, w: cw, h: 1.5, v: '+%' + Math.round(D.band.alt_pct) + '–' + Math.round(D.band.ust_pct), l: 'komponent talep bandı — nokta tahmin değil, bant', vc: C.amber, vsize: 26 });
   chip(s, { x: 0.55 + 2 * (cw + 0.2), y: y0, w: cw, h: 1.5, v: '%34 → %65', l: 'yeni nesil modellerin talep payı — büyüme değil GÖÇ', vc: C.violet, vsize: 26 });
-  s.addText('Grup 3 · prototip: tek dosyalık canlı dashboard + doğrulanmış hesap çekirdeği', {
+  s.addText('Grup 9 · prototip: tek dosyalık canlı dashboard + doğrulanmış hesap çekirdeği', {
     x: 0.55, y: 5.75, w: 12, h: 0.4, fontFace: F.b, fontSize: 13, color: C.dim, margin: 0 });
   foot(s, SENT);
 }
@@ -127,7 +127,7 @@ const SENT = 'Tüm veriler sentetik / temsili resmi case setleridir — gerçek 
 
 /* ================= 4 · ÇÖZÜM ================= */
 {
-  const s = base('Üç katman tek çatı: Seçenek D, A+B+C\'yi kapsar. Kritik mimari karar: hiçbir kaynağa yazmıyoruz — CDC ile okuyoruz. AMOS/TRAX yer değiştirmiyor; üstlerine karar katmanı geliyor. Fazlar takvimle değil metrikle geçilir.');
+  const s = base('Üç katman tek çatı: dashboard, sistem mimarisi ve akıllı uyarı yaklaşımlarını tek platformda birleştiriyoruz — case\'teki örnek başlıklar ilham, bizim önerimiz bütünleşik. Kritik mimari karar: hiçbir kaynağa yazmıyoruz — CDC ile okuyoruz. AMOS/TRAX yer değiştirmiyor; üstlerine karar katmanı geliyor. Fazlar takvimle değil metrikle geçilir.');
   eyebrow(s, 0.55, 0.52, '3 · ÇÖZÜM ÖNERİLERİ');
   title(s, 'Kontrol Kulesi: üç katman, salt-okunur mimari');
   const katman = [
@@ -323,7 +323,7 @@ const SENT = 'Tüm veriler sentetik / temsili resmi case setleridir — gerçek 
   musluk.forEach((m, i) => {
     chip(s, { x: 0.55 + i * 4.14, y: 4.15, w: 3.94, h: 1.55, v: m[0], l: m[1], vc: m[2], vsize: 22 });
   });
-  s.addText('Teşekkürler — canlı demo ve tüm sayıların yeniden üretimi için hazırız.  ·  Grup 3',
+  s.addText('Teşekkürler — canlı demo ve tüm sayıların yeniden üretimi için hazırız.  ·  Grup 9',
     { x: 0.55, y: 6.1, w: 12.2, h: 0.45, fontFace: F.b, fontSize: 13.5, color: C.muted, margin: 0 });
   foot(s, SENT);
 }
