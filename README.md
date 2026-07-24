@@ -29,9 +29,14 @@ python3 analysis.py
 # Envanter durumu analizi (açık / fazla / atıl sermaye)
 python3 inv_analysis.py
 
+# Control Tower metrikleri (control_tower.html için veri)
+python3 ct_data.py
+
 # Derin öğrenme modelini eğit (TensorFlow/Keras) -> demand_model.keras
 python3 train_demand_model.py
 ```
+
+> Sıra önemli: `analysis.py` → `inv_analysis.py` → `ct_data.py` (her biri bir öncekinin çıktısını kullanır).
 
 Dashboard için `envanter_2033_dashboard.html` dosyasını tarayıcıda aç — tüm veri içine gömülü,
 internet gerektirmez.
@@ -48,7 +53,9 @@ internet gerektirmez.
 | `train_demand_model.py` | MLP + Poisson hibrit model eğitimi |
 | `demand_model.keras` | Eğitilmiş model |
 | `model_deney_notlari.md` | Denenen mimariler ve sonuçları |
-| `envanter_2033_dashboard.html` | Tek dosya interaktif dashboard |
+| `ct_data.py` | Control Tower metrikleri (readiness, days-to-shortage, XAI, aksiyon, güven aralığı) |
+| `control_tower.html` | **Inventory Readiness Control Tower** — ana interaktif dashboard (8 modül) |
+| `envanter_2033_dashboard.html` | Analitik dashboard (talep tahmini + envanter + kriz simülatörü) |
 | `pn_2033_envanter_plani.csv` | PN bazında 2033 envanter planı (çıktı) |
 | `pn_full_with_inventory.csv` | Plan + gerçek stok birleşik tablo (çıktı) |
 

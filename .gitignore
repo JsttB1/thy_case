@@ -23,6 +23,7 @@ pn_2033_plan_full.csv
 pn_full_with_inventory.csv
 inv_data.json
 model_results.json
+ct_data.json
 
 # Geçici çıktılar (isteğe bağlı — istersen yorum satırı yap)
 # *.tmp
