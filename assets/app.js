@@ -1,6 +1,6 @@
 'use strict';
 /* =====================================================================
-   Komponent Kontrol Kulesi — uygulama katmanı
+   Catalyst — uygulama katmanı
    Veri: build_dashboard.py'nin gömdüğü DATA (core.py tek doğruluk kaynağı)
    ===================================================================== */
 
@@ -68,7 +68,7 @@ function poissonMin(mu, h){
    ===================================================================== */
 document.body.insertAdjacentHTML('afterbegin', `
 <nav class="topbar"><div class="topbar-in">
-  <span class="brand">◆ <b>KONTROL KULESİ</b> · 2033</span>
+  <span class="brand">◆ <b>CATALYST</b> · 2033</span>
   <span class="synth">SENTETİK / TEMSİLİ VERİ</span>
   <button class="dic-btn" id="dicBtn" title="Kısaltmalar sözlüğü">📖 SÖZLÜK</button>
   <div class="tabs" id="tabs"></div>
@@ -76,11 +76,9 @@ document.body.insertAdjacentHTML('afterbegin', `
 
 <div class="wrap">
   <header class="hero">
-    <span class="eyebrow">Global Talent Bridge · Filo Büyür, Envanter Hazır Mı?</span>
-    <h1>Komponent Kontrol Kulesi · Karar Destek Prototipi</h1>
-    <p>Uçaklar için bir kontrol kulesi var, komponentler için yok. Filo 1.200 uçaktan 2.000 uçağa çıkarken
-    ${fmt(K.pn)} parça için görünürlük, öngörü ve aksiyon katmanı sunuyoruz. Bütün sayılar üç resmi veri setinden
-    <span class="mono">core.py</span> ile hesaplanır. Bu bir maket değil, çalışan bir prototiptir.</p>
+    <h1>Catalyst · Komponent Envanter Karar Desteği</h1>
+    <p>${fmt(K.pn)} parça · 1.200 → 2.000 uçak projeksiyonu · tüm sayılar üç resmi veri setinden
+    <span class="mono">core.py</span> ile hesaplanır.</p>
   </header>
 
   <div id="v-kokpit" class="view"></div>
@@ -93,7 +91,7 @@ document.body.insertAdjacentHTML('afterbegin', `
     <b>Varsayımlar ve sınırlar.</b> Kullanılabilir stoğu FAAL ile HOMEBASE toplamı olarak alıyoruz, bu bir yorumdur.
     İstasyon kırılımı veride yok, harita basılı case tablosuyla temsilî dağıtılmıştır.
     Elimizde tek yıllık veri var, bu yüzden mevsimsellik tek gözleme dayanıyor.
-    THY uçağı yılda ${f1(B.thy_ucak_basi)}, pool uçağı ${f1(B.pool_ucak_basi)} parça talep ediyor. Bu 3,6 katlık farkı anomali olarak mentora raporladık.
+    THY uçağı yılda ${f1(B.thy_ucak_basi)}, pool uçağı ${f1(B.pool_ucak_basi)} parça talep ediyor. Aradaki 3,6 katlık fark veri anomalisi olarak işaretlidir.
     Projeksiyon tek bir nokta değil bir aralık: +${pct(B.alt_pct,1)} ile +${pct(B.ust_pct,1)} arası.
     Kritiklik ağırlıkları, BER eşiği ${String(PRM.ber_esigi).replace('.',',')}, servis hedefleri ve tampon gibi parametreler sabit değil, ayarlanabilir.
     Tüm veriler resmi sentetik case setleridir, gerçek THY/AMOS verisi değildir.
@@ -170,11 +168,11 @@ function renderKokpit(){
 
   <div class="grid g2">
     <div class="card"><h3>Pool ve değişim havuzu bugün zaten çalışıyor
-      <span class="bg bg-warn" style="vertical-align:2px;margin-left:6px">MENTORA SORULDU</span></h3>
+      <span class="bg bg-warn" style="vertical-align:2px;margin-left:6px">VERİ ANOMALİSİ</span></h3>
       <div class="hint">Yılda <b>${fmt(K.exch_in)} giriş, ${fmt(K.exch_out)} çıkış</b> değişim trafiği var. Bu, havuz mekanizmasının
       şimdiden işlediğini gösteriyor. Talebin yarıdan fazlası havuzdan gelen <b>${K.pool_bagimli} parça</b> havuza bağımlı işaretli.
       Bir anomali de var: THY uçağı yılda ${f1(B.thy_ucak_basi)} parça talep ederken pool uçağı ${f1(B.pool_ucak_basi)} talep ediyor,
-      arada <b>3,6 kat</b> fark. Bunu gizlemedik, mentora sorduk. Sistemde bu oran sabit değil, ayarlanabilir.</div>
+      arada <b>3,6 kat</b> fark var ve veri anomalisi olarak işaretlidir. Sistemde bu oran sabit değil, ayarlanabilir.</div>
       <div style="height:130px"><canvas id="cPool"></canvas></div></div>
     <div class="card"><h3>Gayrifaal karar kuyruğu: rafta bekleyen karar</h3>
       <div class="grid g3" style="margin:10px 0 4px">
@@ -182,8 +180,8 @@ function renderKokpit(){
         <div class="kpi amber" style="padding:11px 13px"><div class="l">Faale döndürme</div><div class="v" style="font-size:1.25rem">${mM(K.gayrifaal_tamir)}</div><div class="d">tahmini tamir maliyeti</div></div>
         <div class="kpi teal" style="padding:11px 13px"><div class="l">Kazanılacak değer</div><div class="v" style="font-size:1.25rem">${mM(K.gayrifaal_fmv)}</div><div class="d">piyasa değeri</div></div>
       </div>
-      <div class="hint">Net kazançlı bir havuz. Tek şart, tamiri ekonomik olmayanları önce ayıklamak. Vizyonumuzda her bekleyen parçaya
-      bir karar süresi hedefi konuyor, çünkü <b>karar gecikmesi de bir tür tamir süresidir.</b></div></div>
+      <div class="hint">Net kazançlı bir havuz. Tek şart, tamiri ekonomik olmayanları önce ayıklamak. Her bekleyen parçaya
+      bir karar süresi hedefi tanımlanır, karar gecikmesi de tamir süresine eklenir.</div></div>
   </div>
 
   <div class="grid g21">
@@ -206,7 +204,7 @@ function renderKokpit(){
       <div class="ladder">
         <div class="step"><span class="no">→</span><span class="nm">Satış → Planlama → Satın Alma → Lojistik → Gümrük → Tesellüm → Depo → Atölye → Komponent Hizmetleri<small>Kalite tüm süreci yatay keser. Her elden geçişte veri kopuyor.</small></span></div>
         <div class="step"><span class="no">⚠</span><span class="nm">Bozuk parçada süreç: atölye → hangar stoğu → tedarikçi → getirtme → kanibalizasyon → AOG timi<small>Tamamen telefonla ilerleyen, kayıt tutmayan bir süreç.</small></span></div>
-        <div class="step best"><span class="no">✓</span><span class="nm">Kontrol Kulesi mevcut sistemleri okur, hiçbirine yazmaz. Kayıt sistemi değil, bir <b>karar katmanı.</b><small>${K.siparissiz} siparişsiz parça, eksik olan bu katmanın ölçülmüş hâli.</small></span></div>
+        <div class="step best"><span class="no">✓</span><span class="nm">Catalyst mevcut sistemleri okur, hiçbirine yazmaz. Kayıt sistemi değil, bir <b>karar katmanı.</b><small>${K.siparissiz} siparişsiz parça, eksik olan bu katmanın ölçülmüş hâli.</small></span></div>
       </div></div>
   </div>
 
@@ -227,7 +225,7 @@ function renderKokpit(){
   </div>
 
   <div class="card" style="margin-top:2px"><h3>Mimari: kayıt sistemlerinin üzerine bir karar katmanı</h3>
-    <div class="hint">"AMOS ve TRAX zaten var, farkınız ne?" sorusunun cevabı bu şema. Mevcut sistemler değiştirilmiyor, sadece
+    <div class="hint">Mevcut sistemler değiştirilmiyor, sadece
     okunuyor. Veriler tek bir modelde birleşiyor ve motorlar bunun üzerinde çalışıyor. Hiçbir kaynağa geri yazılmadığı
     için entegrasyon riski neredeyse sıfır ve ilk değer ilk günden geliyor.</div>
     <div style="overflow-x:auto"><svg viewBox="0 0 1000 232" style="min-width:820px;width:100%">
@@ -255,8 +253,7 @@ function renderKokpit(){
         <text x="778" y="${34 + i * 42}" text-anchor="middle" font-size="10" fill="#9AA8C0" font-family="Inter,sans-serif">${t}</text>`).join('')}
       <line x1="848" y1="112" x2="892" y2="112" stroke="#4FC1B0" stroke-width="1.6" marker-end="url(#mAr)"/>
       <rect x="896" y="72" width="94" height="80" rx="8" fill="rgba(79,193,176,.1)" stroke="#4FC1B0"/>
-      <text x="943" y="98" text-anchor="middle" font-size="11" fill="#EAF0F7" font-family="Inter,sans-serif" font-weight="600">Kontrol</text>
-      <text x="943" y="113" text-anchor="middle" font-size="11" fill="#EAF0F7" font-family="Inter,sans-serif" font-weight="600">Kulesi</text>
+      <text x="943" y="106" text-anchor="middle" font-size="11" fill="#EAF0F7" font-family="Inter,sans-serif" font-weight="600">Catalyst</text>
       <text x="943" y="133" text-anchor="middle" font-size="8.5" fill="#77869C" font-family="'JetBrains Mono',monospace">5 ekran + alarm</text>
       <path d="M896,190 Q460,224 132,190" fill="none" stroke="#E06A6A" stroke-width="1.4" stroke-dasharray="7,5"/>
       <line x1="500" y1="196" x2="524" y2="216" stroke="#E06A6A" stroke-width="2"/>
@@ -285,7 +282,6 @@ function renderKokpit(){
   </div>
 
   <div class="card" style="margin-top:16px"><h3>Veri boşlukları: neyi bilmiyoruz, üründe nereden gelecek?</h3>
-    <div class="hint">Sınırlarımızı kendimiz söylüyoruz. Bu tabloyu saklamıyoruz, açıkça gösteriyoruz.</div>
     <div class="tw" style="max-height:none"><table><thead><tr>
       <th>Eksik veri</th><th>Bugünkü etkisi</th><th>Ürünün gerçeğinde kaynağı</th></tr></thead><tbody>
       <tr><td>İstasyon bazlı stok</td><td>Harita temsilî dağıtımla çalışıyor</td><td>Faz 1'de istasyon etiketli depo kayıtları</td></tr>
@@ -594,17 +590,16 @@ function renderOngoru(){
       Tek parça düzeyinde ise katsayı bir şey değiştirmiyor, çünkü talep kesikli olduğu için bir parçanın yaz zirvesi öngörülemez.
       Buradan çıkan ders: parçada kesikli talep yöntemleri, bütçe ve kapasite planında mevsim düzeltmesi kullanılır.</div>
       <div style="height:205px"><canvas id="cBt"></canvas></div></div>
-    <div class="callout" style="margin:0"><span class="tag">Bu Test Neden Önemli?</span>
-      <p>"Projeksiyonlarınız güvenilir mi?" sorusunun üçüncü kanıtı bu. Birincisi, float formülünün sahayla %97 uyumlu çıkması.
-      İkincisi, risk sıralamasının birincisinin sahada gerçekten riskli olması. Üçüncüsü de bu test: model, görmediği çeyreğin
-      <strong>toplamını binde dört hatayla</strong> bildi. Üçü birden aynı şeyi söylüyor. Bu bir maket değil. Kaydırıcılar,
-      senaryolar ve optimizasyon hep bu doğrulanmış çekirdeğin üzerinde çalışıyor.</p></div>
+    <div class="callout" style="margin:0"><span class="tag">Doğrulama</span>
+      <p>Üç bağımsız kontrol aynı yönde: float formülü sahayla %97 uyumlu, risk sıralamasının birincisi sahada da riskli,
+      geri test görmediği çeyreğin <strong>toplamını binde dört hatayla</strong> bildi. Kaydırıcılar,
+      senaryolar ve optimizasyon bu çekirdeğin üzerinde çalışır.</p></div>
   </div>
 
   <h2 class="sec-h">2033 projeksiyonu: büyüme değil, dağılım değişimi</h2>
   <div class="grid g3">
     <div class="card"><h3>Talep aralığı: +%${Math.round(B.alt_pct)} – +%${Math.round(B.ust_pct)}</h3>
-      <div class="hint">İki ayrı yöntemle hesapladık ve sonuçları bir aralık olarak veriyoruz. Tek bir nokta tahmin sunmuyoruz.</div>
+      <div class="hint">İki ayrı yöntemin sonucu aralık olarak verilir. Nokta tahmin kullanılmaz.</div>
       <div style="height:250px"><canvas id="cBant"></canvas></div></div>
     <div class="card"><h3>Talep nasıl yer değiştiriyor?</h3>
       <div class="hint">Yeni nesil modellerin payı %34'ten %65'e çıkıyor, küçülen 4 klasik model ise %43'ten %16'ya iniyor.
@@ -674,7 +669,7 @@ function renderOngoru(){
   <span class="mono">uv run train_demand_model.py</span> çalıştırın.</p></div>`}
 
   <div class="grid g21">
-    <div class="card"><h3>Cold-start demosu: geçmişi olmayan parçayı tahmin etmek</h3>
+    <div class="card"><h3>Cold-start: geçmişi olmayan parçayı tahmin etmek</h3>
       <div class="hint">Örnek olarak <b class="mono" style="color:${C.teal}">PN-${DATA.coldstart.pn}</b> parçasını alalım, ${DATA.coldstart.sub} kategorisinden.
       Bu parçanın geçmişi yok, o yüzden ilk tahmini benzerlerinden alıyoruz. <b>${DATA.coldstart.grup_ad}</b> ailesindeki
       ${fmt(DATA.coldstart.grup_n)} benzer parçanın ortalaması <b>${String(DATA.coldstart.prior).replace('.',',')} adet</b>.
@@ -684,9 +679,9 @@ function renderOngoru(){
       <div style="height:190px"><canvas id="cCold"></canvas></div>
       <div class="hint" style="margin-top:7px">Yöntem basit: benzerlerinden başla, gözlem geldikçe düzelt. 2033 talebinin
       yaklaşık %65'i geçmişi olmayan parçalarda olduğu için bu bir kenar durum değil, ana senaryo.</div></div>
-    <div class="callout amber" style="margin:0"><span class="tag">Vizyon: Rutin Dışı Bakım Entegrasyonu</span>
+    <div class="callout amber" style="margin:0"><span class="tag">Yol Haritası: Rutin Dışı Bakım Entegrasyonu</span>
       <p>Bir uçak plansız yere indiğinde, aynı zaman aralığındaki <strong>planlı söküm ve bakımlar öne çekilebilir</strong>.
-      Böylece parça talepleri tek bir pencerede toplanır ve uçak ikinci kez yere indirilmez. Kontrol Kulesi bunu görebilir,
+      Böylece parça talepleri tek bir pencerede toplanır ve uçak ikinci kez yere indirilmez. Catalyst bunu görebilir,
       çünkü hem arıza talebini hem bakım planını aynı veri modelinde tutar. Kazanç doğrudan ana ölçüte yansır:
       <strong>yerde bekleyen uçak oranı düşer</strong>. Bu, basılı case'te belirtilen bakım planı entegrasyon eksikliğinin de cevabı.</p></div>
   </div>`;
@@ -847,7 +842,7 @@ function renderOngoru(){
     segDraw('kesiklilik');
   }
 
-  /* ---- cold-start canlı demosu ---- */
+  /* ---- cold-start canlı hesap ---- */
   const cs = DATA.coldstart, K0 = 1;                       // öncül ağırlığı ≈ 1 çeyreklik gözlem
   const post = n => (K0*cs.prior + cs.q.slice(0,n).reduce((a,b)=>a+b,0)) / (K0 + n);
   const csLabels = ['Öncül','+Q1','+Q2','+Q3','+Q4'];
@@ -1260,9 +1255,9 @@ function renderSenaryo(){
 
   <div class="grid g12" style="margin-top:14px">
     <div class="card" style="border-color:rgba(79,193,176,.35)">
-      <h3 style="color:${C.teal}">Canlı parametreler: jüri modu</h3>
-      <div class="hint">Modelin varsayımları sabit değil. "Ağırlık neden 3?" diye sorulursa cevap bu ekran.
-      Kaydırıcıyı oynatın, bütün sayılar tarayıcıda anında yeniden hesaplansın.</div>
+      <h3 style="color:${C.teal}">Model parametreleri</h3>
+      <div class="hint">Ağırlıklar, BER eşiği ve alarm tamponu buradan değiştirilir.
+      Bütün sayılar tarayıcıda anında yeniden hesaplanır.</div>
       <div class="sl"><label>AOG kritik ağırlığı <b id="lW0">3</b></label><input type="range" id="pW0" min="1" max="6" step="0.5" value="3"></div>
       <div class="sl"><label>Kritik ağırlığı <b id="lW1">2</b></label><input type="range" id="pW1" min="1" max="6" step="0.5" value="2"></div>
       <div class="sl"><label>Kritik değil ağırlığı <b id="lW2">1</b></label><input type="range" id="pW2" min="0.5" max="6" step="0.5" value="1"></div>
@@ -1313,11 +1308,11 @@ function renderSenaryo(){
       Ölçtüğümüz şey, bugünkü stokla tedarik süresini çıkaramayacak <b>parça sayısı</b>.
       Normal durumda ortalama <b>${fmt(DATA.mc.baz.acik_ort)}</b> parça çıkıyor, denemelerin çoğu ${fmt(DATA.mc.baz.acik_p10)} ile ${fmt(DATA.mc.baz.acik_p90)} arasında.
       Motor krizinde bu sayı <b>${fmt(DATA.mc.motor.acik_ort)}</b> parçaya, ek ihtiyaç ${mM(DATA.mc.motor.ek_ort)}'a çıkıyor.
-      Simülasyon, formülle hesapladığımız sonuçla <b style="color:${C.teal}">%${String(DATA.mc.uyum).replace('.',',')}</b> uyumlu. Yani formüllerimiz maket değil.</div>
+      Simülasyon, formülle hesaplanan sonuçla <b style="color:${C.teal}">%${String(DATA.mc.uyum).replace('.',',')}</b> uyumlu.</div>
       <div style="height:200px"><canvas id="cMc"></canvas></div></div>
     <div class="card"><h3>Duyarlılık: 2033 açığını kapatma maliyetini ne oynatır?</h3>
       <div class="hint">Temel maliyet <b>${mM(DATA.tornado.baz)}</b>. Çubuklar her etkenin iki ucunu gösteriyor.
-      En büyük etken <b>tedarik süreleri</b>. Bu, "tedarik süresinin her günü sermayedir" cümlesinin sayısal kanıtı.
+      En büyük etken <b>tedarik süreleri</b>.
       Kabiliyet yatırımı çubuğu ise 547 parçayı iç tamire almanın açığı ne kadar küçülttüğünü gösteriyor.</div>
       <div style="height:200px"><canvas id="cTornado"></canvas></div></div>
   </div>
@@ -1326,8 +1321,7 @@ function renderSenaryo(){
     <h3>Kaynak önceliklendirme: kısıtlı bütçeyle önce ne alınır?</h3>
     <div class="hint">Bir parçaya eklenecek her adet için "harcanan para başına ne kadar risk azalıyor" hesaplanıyor ve
     ${fmt(DATA.opt.toplam_adim)} alım adımının hepsi bu ölçüye göre sıralanıyor. Eğri, sınırlı bir bütçenin nereye kadar gittiğini gösteriyor.
-    Tamamı ${mM(DATA.opt.toplam_butce)} ama eğrinin dikliği, <b>ilk birkaç milyon doların kazancın büyük bölümünü sağladığını</b> söylüyor.
-    "Önce ne alınmalı?" sorusunun matematiksel cevabı bu.</div>
+    Tamamı ${mM(DATA.opt.toplam_butce)} ama <b>ilk birkaç milyon dolar kazancın büyük bölümünü sağlıyor</b>.</div>
     <div class="grid g21" style="margin:0">
       <div><div style="height:235px"><canvas id="cOpt"></canvas></div></div>
       <div class="tw" style="max-height:235px"><table><thead><tr>

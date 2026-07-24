@@ -1,7 +1,7 @@
 [project]
-name = "kontrol-kulesi"
+name = "catalyst"
 version = "1.0.0"
-description = "Komponent Kontrol Kulesi — Global Talent Bridge (Turkish Technic) karar destek prototipi: dashboard üreteci, tahmin motoru ve sunum araçları"
+description = "Catalyst — Global Talent Bridge (Turkish Technic) komponent envanteri karar destek prototipi: dashboard üreteci, tahmin motoru ve sunum araçları"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
@@ -17,3 +17,8 @@ dependencies = [
 [tool.uv]
 # Bu depo bir kütüphane değil, script koleksiyonu — paket olarak kurulmasın
 package = false
+
+[dependency-groups]
+gui = [
+    "pyqt6>=6.11.0",
+]

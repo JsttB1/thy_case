@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Kontrol Kulesi — tek doğruluk kaynağı (single source of truth).
+Catalyst — tek doğruluk kaynağı (single source of truth).
 
 Üç resmi CSV'yi okur, CLAUDE.md Bölüm 3'teki TÜM doğrulanmış metrikleri ve
 Bölüm 4'teki formülleri birebir üretir. Dashboard, analiz script'leri ve

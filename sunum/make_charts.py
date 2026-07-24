@@ -101,32 +101,6 @@ def goc():
 
 
 # ─────────────────────────────────────────────────────────────────────────
-# S5 · Geri test — mevsim katsayısı hatayı %0,4'e indiriyor
-# ─────────────────────────────────────────────────────────────────────────
-def backtest():
-    bt = D['backtest']
-    err = bt['toplam_hata']  # [13.3, 17.1, 16.3, 0.4]
-    labels = ['Naïve\n(tek çeyrek)', 'İki çeyrek\nortalaması', 'SBA', 'SBA ×\nmevsim kats.']
-    colors = [SOLUK, SOLUK, SOLUK, PEMBE]
-    fig, ax = plt.subplots(figsize=(9.0, 2.7), constrained_layout=True)
-    style(ax)
-    ax.bar(range(4), err, 0.60, color=colors)
-    for i, v in enumerate(err):
-        son = (i == 3)
-        ax.text(i, v + 0.5, '%' + tr(v, 1), ha='center',
-                color=(BEYAZ if son else LILA), fontsize=13,
-                fontweight=('bold' if son else 'normal'))
-    ax.set_xticks(range(4))
-    ax.set_xticklabels(labels, fontsize=11.5, color=LILA)
-    ax.set_ylim(0, 20)
-    ax.set_yticks([0, 5, 10, 15])
-    ax.set_yticklabels(['%0', '%5', '%10', '%15'])
-    ax.set_ylabel('toplam hata')
-    baslik(ax, 'Mevsim katsayısı toplam hatayı %0,4’e indiriyor')
-    save(fig, 's5_backtest.png')
-
-
-# ─────────────────────────────────────────────────────────────────────────
 # S6 · üç dar sütun için üç küçük çubuk
 # ─────────────────────────────────────────────────────────────────────────
 def taps():
@@ -192,7 +166,6 @@ def basari():
 
 if __name__ == '__main__':
     goc()
-    backtest()
     taps()
     kriz()
     basari()

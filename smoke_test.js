@@ -3,7 +3,7 @@
 'use strict';
 const fs = require('fs');
 const ROOT = __dirname;
-const html = fs.readFileSync(ROOT + '/kontrol_kulesi.html', 'utf8');
+const html = fs.readFileSync(ROOT + '/catalyst.html', 'utf8');
 const m = html.match(/<script>const DATA=([\s\S]*?);<\/script>/);
 if (!m) { console.error('DATA bloğu bulunamadı'); process.exit(1); }
 const DATA = JSON.parse(m[1]);

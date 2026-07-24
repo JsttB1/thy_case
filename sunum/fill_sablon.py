@@ -2,7 +2,7 @@
 """Resmi Global Talent Bridge şablonunu (7 slayt, 20×11,25") proje içeriğiyle doldurur.
 Şablon tasarımına DOKUNULMAZ: mevcut metin kutularında run düzeyinde değişiklik yapılır
 (biçim korunur); boş slaytlara marka diline uygun kutular eklenir.
-Çalıştırma: uv run fill_sablon.py → Grup9_Komponent_Kontrol_Kulesi.pptx"""
+Çalıştırma: uv run fill_sablon.py → Grup9_Catalyst.pptx"""
 import copy, json, os
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
@@ -98,16 +98,15 @@ PB, PSB, PR, PL = FONT, FONT, FONT, FONT   # ağırlık, kutu_ekle'deki bold bay
 S[0].shapes.title.text_frame.paragraphs[0].runs[0].text if S[0].shapes.title.text_frame.paragraphs[0].runs else None
 tf = S[0].shapes.title.text_frame
 if tf.paragraphs[0].runs:
-    tf.paragraphs[0].runs[0].text = 'Komponent Kontrol Kulesi'
+    tf.paragraphs[0].runs[0].text = 'Catalyst'
 else:
-    tf.text = 'Komponent Kontrol Kulesi'
+    tf.text = 'Catalyst'
 kutu_ekle(S[0], 10.15, 6.35, 8.9, 2.4, [
-    ('Filo Büyür, Envanter Hazır mı?  ·  Grup 9', 20, LILA, False, PSB),
-    ('Uçaklar için bir kontrol kulesi var, komponentler için yok.', 15, SOLUK, False, PL),
-    ('5.000 parça için görünürlük, öngörü ve aksiyon katmanı.', 15, SOLUK, False, PL),
-    ('1.200 uçaktan 2.000 uçağa giden yol. Tüm veriler sentetiktir.', 13, PEMBE, False, PR),
+    ('Komponent Envanter Karar Platformu  ·  Grup 9', 20, LILA, False, PSB),
+    ('5.000 parça için görünürlük, öngörü ve aksiyon.', 15, SOLUK, False, PL),
+    ('1.200 uçaktan 2.000 uçağa hazırlık. Tüm veriler sentetiktir.', 13, PEMBE, False, PR),
 ])
-notlar(S[0], 'Konsepti tek cümlede veriyoruz: uçaklar için bir kontrol kulesi var, komponentler için yok. Filo %67 büyürken talep %63 ile %68 arası artıyor. Asıl kırılma büyümede değil, talebin yer değiştirmesinde. Bütün sayılar üç resmi veri setinden geliyor ve yeniden üretilebilir.')
+notlar(S[0], 'Catalyst, komponent envanteri için karar destek platformu. Filo %67 büyürken talep %63 ile %68 arası artıyor. Asıl kırılma büyümede değil, talebin yer değiştirmesinde. Bütün sayılar üç resmi veri setinden geliyor ve yeniden üretilebilir.')
 
 # ============ S2 · PROBLEM + BOŞLUK ============
 bul(S[1], 'Title 51').text_frame.paragraphs[0].runs[0].text = 'Problem: Büyüme Değil, Talebin Yer Değiştirmesi'
@@ -135,33 +134,68 @@ kutu_ekle(S[1], 10.6, 5.95, 8.2, 3.1, [
 notlar(S[1], 'Problem ve mevcut boşluğu birlikte veriyoruz. 72 parçanın stoğu bitmek üzere ve sipariş bile açılmamış. Bu, azalmayı hesaplayan bir sürecin olmadığının kanıtı. Bu durumu resmi stok verisiyle ilk kez biz ölçtük.')
 resim_ekle(S[1], os.path.join(CH, 's2_goc.png'), 0.6, 5.6, 8.5, 3.97, cerceve=False)
 
-# ============ S3 · ÇÖZÜM AKIŞI (6 adım) ============
+# ============ S3 · ÇÖZÜM AKIŞI (6 adım + 3 faz bandı) ============
 bul(S[2], 'Title 26').text_frame.paragraphs[0].runs[0].text = 'Çözüm: Uçtan Uca Bir Karar Katmanı'
 etiketler = ['BAĞLAN', 'BİRLEŞTİR', 'ÖNGÖR', 'UYAR', 'HAREKETE GEÇ', 'PROVA ET']
 govdeler = [
-    ['CDC ile salt-okunur', 'AMOS/TRAX değişmez', 'geri yazma yok', 'sıfır entegrasyon riski'],
-    ['olay omurgası', 'tek komponent kaydı', 'gerçek TAT olaydan', 'PN + durum + konum'],
-    ['ABC×XYZ segmentleri', 'Croston/SBA + AI', 'cold-start (Bayes)', 'mevsim katsayısı ×1,20'],
-    ['TTS<TTR alarmı', 'dinamik min–max', 'emniyet stoğu (Poisson)', 'siparişsiz kırmızı: 0'],
-    ['aksiyon merdiveni', 'BER · pool · phase-out', 'süre + maliyet puanı', 'AOG $/saat kıyası'],
-    ['kriz senaryoları', 'Monte Carlo + duyarlılık', 'bütçe optimizasyonu', 'çeyreklik war-game'],
+    ['Mevcut bakım sistemlerine bağlanır ve kayıtları yalnızca okur.',
+     'Hiçbir sisteme yazmadığı için mevcut işleyiş değişmez.'],
+    ['Bir parçanın farklı sistemlerdeki kayıtları tek kimlikte birleşir.',
+     'Parçanın yeri, durumu ve gerçek tamir süresi tek yerden izlenir.'],
+    ['Gelecek talep, her parça grubuna uygun yöntemle aralık olarak tahmin edilir.',
+     'Geçmişi olmayan yeni parçalar benzerlerinin verisinden yola çıkar.'],
+    ['Stok, yenisi gelene kadar yetmeyecekse sistem önceden alarm verir.',
+     'Her alarm önerilen aksiyonla gelir ve stok seviyeleri kendini günceller.'],
+    ['Riskli parça için tamir, havuz, hurda ve alım seçenekleri süre ile maliyete göre puanlanır.',
+     'Ekip en uygun adımı tek bakışta görür.'],
+    ['Motor arızası ya da tedarik gecikmesi gibi krizler önceden denenir, etkisi anında hesaplanır.',
+     'Bütçe en çok riski kapatan alıma yönlenir ve plan her çeyrek tazelenir.'],
 ]
+def govde_yaz(tf, satirlar):
+    """S3 gövdeleri: tam cümleler — sola yaslı, 12,5 pt, normal ağırlık (fragman değil paragraf)."""
+    i = 0
+    for p in tf.paragraphs:
+        if not p.runs:
+            continue
+        p.alignment = PP_ALIGN.LEFT
+        p.runs[0].text = satirlar[i] if i < len(satirlar) else ''
+        p.runs[0].font.name = FONT
+        p.runs[0].font.size = Pt(12.5)
+        p.runs[0].font.bold = False
+        for r in p.runs[1:]:
+            r.text = ''
+        i += 1
 for ad, met in zip(['TextBox 69', 'TextBox 71', 'TextBox 73', 'TextBox 75', 'TextBox 77', 'TextBox 84'], etiketler):
     run_yaz(bul(S[2], ad).text_frame, [met])
 for ad, sat in zip(['TextBox 88', 'TextBox 89', 'TextBox 90', 'TextBox 93', 'TextBox 92', 'TextBox 91'], govdeler):
-    run_yaz(bul(S[2], ad).text_frame, sat)
-notlar(S[2], 'Üç katmanı altı adımda anlatıyoruz. Bağlan ve birleştir ilk faz, öngör ve uyar ikinci faz, harekete geç ve prova et sonraki faz. Fazlar arası geçiş tarihe değil metriğe bağlı. En önemli nokta: mevcut sistemlere hiçbir şey yazmıyoruz, sadece okuyoruz.')
+    govde_yaz(bul(S[2], ad).text_frame, sat)
+# Faz bandı: kutu çiftlerinin altına üç etiket (notlardaki fazlama slaytta da görünsün)
+for a, b, faz in [('TextBox 88', 'TextBox 89', 'FAZ 1 · GÖRÜNÜRLÜK'),
+                  ('TextBox 90', 'TextBox 93', 'FAZ 2 · ÖNGÖRÜ'),
+                  ('TextBox 92', 'TextBox 91', 'FAZ 3 · AKSİYON')]:
+    sa, sb = bul(S[2], a), bul(S[2], b)
+    x1 = Emu(sa.left).inches
+    x2 = Emu(sb.left).inches + Emu(sb.width).inches
+    yalt = 9.05   # kart zeminleri ~8,78"de bitiyor (metin kutusundan uzun); sabit hiza en güvenlisi
+    cz = S[2].shapes.add_shape(5, Inches(x1 + 0.10), Inches(yalt), Inches(x2 - x1 - 0.20), Inches(0.52))
+    cz.adjustments[0] = 0.5
+    cz.fill.background()
+    cz.line.color.rgb = CIZGI; cz.line.width = Pt(1)
+    cz.shadow.inherit = False
+    tb = kutu_ekle(S[2], x1, yalt + 0.075, x2 - x1, 0.42, [(faz, 13, LILA, True, PSB)])
+    tb.text_frame.paragraphs[0].alignment = PP_ALIGN.CENTER
+notlar(S[2], 'Altı adımı üç fazda anlatıyoruz. Bağlan ve birleştir görünürlük fazı, öngör ve uyar öngörü fazı, harekete geç ve prova et aksiyon fazı. Fazlar arası geçiş tarihe değil ölçüte bağlı. En önemli nokta: mevcut sistemlere hiçbir şey yazmıyoruz, sadece okuyoruz.')
 
 # ============ S4 · PROTOTİP (6 kart) ============
 bul(S[3], 'Title 74').text_frame.paragraphs[0].runs[0].text = 'Prototip: Tek Dosyalık Canlı Dashboard'
 for ad in ('TextBox 40', 'TextBox 41', 'TextBox 42', 'TextBox 43'):   # şablondaki örnek metinleri boşalt
     run_yaz(bul(S[3], ad).text_frame, [])
 kartlar = [
-    ('Kokpit', 'Envanter, para kalemleri, 72 uyarı', 'kokpit.png'),
-    ('Watchlist', '5.000 parça riske göre sıralı', 'watch.png'),
-    ('Öngörü & AI', 'Projeksiyon + canlı tahmin', 'ongoru.png'),
+    ('Kokpit', 'Envanter, para akışı, kırmızı liste', 'kokpit.png'),
+    ('Watchlist', 'Risk sırası + önerilen aksiyon', 'watch.png'),
+    ('Öngörü & AI', 'Segment tahmini + cold-start', 'ongoru.png'),
     ('Harita', '25 istasyon, krizin ağa etkisi', 'harita.png'),
-    ('Senaryo ve Jüri Modu', 'Krizi tek tıkla uygula', 'senaryo.png'),
+    ('Senaryo', 'Kriz ve parametreler tek ekranda', 'senaryo.png'),
     ('Doğrulanmış Çekirdek', 'Float %97, geri test binde 4', 'cekirdek.png'),
 ]
 gruplar = ['Group 50', 'Group 59', 'Group 62', 'Group 65', 'Group 68', 'Group 71']
@@ -173,31 +207,34 @@ for g, (baslik, alt, shot) in zip(gruplar, kartlar):
     run_yaz(tbs[1].text_frame, [alt])
     tbs[1].text_frame.vertical_anchor = MSO_ANCHOR.TOP
     resim_ekle(S[3], os.path.join(SH, shot), gx + 0.37, gy + 0.98, 3.90, 2.06)
-notlar(S[3], 'Canlı demoyu bu beş ekranda yapıyoruz, altıncı kart güven veren kart. Dashboard tek bir HTML dosyası, USB’den açılıyor ve salon ağına ihtiyaç duymuyor. Her sayı koddan yeniden üretilebiliyor.')
+notlar(S[3], 'Beş ekranı canlı gösteriyoruz. Dashboard tek bir HTML dosyası, USB’den açılıyor ve salon ağına ihtiyaç duymuyor. Her sayı koddan yeniden üretilebiliyor.')
 
-# ============ S5 · YAPAY ZEKÂ ============
-bul(S[4], 'Title 28').text_frame.paragraphs[0].runs[0].text = 'Yapay Zekâ: Hibrit ve Dürüst'
+# ============ S5 · ÖZELLİKLER ============
+bul(S[4], 'Title 28').text_frame.paragraphs[0].runs[0].text = 'Platform Özellikleri'
 kutu_ekle(S[4], 0.6, 2.2, 9.2, 8.4, [
-    ('İstatistik temel, yapay zekâ üstüne düzeltme', 19, PEMBE, True, PB),
-    ('Ağ, istatistiksel tahminin üzerine çarpan bir düzeltme öğreniyor. Az veriyle bu yaklaşım daha kararlı kalıyor.', 14, LILA, False, PL),
-    ('Parça talebi çok kesikli, medyanı yılda 11 adet', 16, BEYAZ, True, PSB),
-    ('Bu yüzden tekil parçada klasik yöntemler kullanılıyor. Ağ şimdilik sadece öneri veriyor, kararı vermiyor.', 14, LILA, False, PL),
-    ('Yeni parçaların geçmişi yok, 2033 talebinin %65’i bunlarda', 16, BEYAZ, True, PSB),
-    ('Tahmine benzer parçalardan başlıyoruz. Gerçek veri geldikçe model o parçaya yakınsıyor.', 14, LILA, False, PL),
+    ('Kırmızı liste ve siparişsiz alarmı', 15, BEYAZ, True, PSB),
+    ('Dayanma süresi tedarik süresinin altına inen parça uyarı üretir. Uyarı, aksiyon önerisiyle birlikte gelir.', 13, LILA, False, PL),
+    ('Dinamik min–max ve emniyet stoğu', 15, BEYAZ, True, PSB),
+    ('Her parça için servis hedefine göre otomatik hesaplanır. Elle liste tutulmaz.', 13, LILA, False, PL),
+    ('Aksiyon merdiveni', 15, BEYAZ, True, PSB),
+    ('Tamir, pool, BER ve alım seçenekleri süre ve maliyet puanıyla sıralanır.', 13, LILA, False, PL),
+    ('Bütçe optimizasyonu', 15, BEYAZ, True, PSB),
+    ('Verilen bütçeyle en çok riski kapatan alım listesini çıkarır.', 13, LILA, False, PL),
+    ('Tahmin motoru', 15, BEYAZ, True, PSB),
+    ('Segment bazlı istatistik, üstüne AI düzeltmesi. Geçmişi olmayan parça benzerlerinden başlar, veri geldikçe kendine yakınsar.', 13, LILA, False, PL),
 ])
 kutu_ekle(S[4], 10.6, 2.5, 8.2, 2.55, [
-    ('%16,3 → %0,4', 44, PEMBE, True, PB),
-    ('Modeli görmediği bir çeyrekle sınadık. Yılın ilk yarısıyla üçüncü', 14, BEYAZ, False, PR),
-    ('çeyreği tahmin etti ve toplam hata binde dörde indi.', 14, BEYAZ, False, PR),
+    ('72 → 0', 44, PEMBE, True, PB),
+    ('Stoğu biten ama siparişi olmayan parça sayısı ilk fazda sıfırlanır.', 14, BEYAZ, False, PR),
+    ('Her uyarı bir aksiyona bağlanır.', 14, BEYAZ, False, PR),
 ], panel=True)
 kutu_ekle(S[4], 10.6, 5.75, 8.2, 3.0, [
-    ('Dört bağımsız doğrulama', 16, AMBER, True, PSB),
-    ('Float tahmini sahayla %97 uyumlu. Risk sıralamasının birincisi gerçekten stokta riskli.', 14, LILA, False, PL),
-    ('Geri test binde 4 hata verdi. Simülasyon, formülle %99,5 uyum gösterdi.', 14, LILA, False, PL),
-    ('Kaydırıcılar, senaryolar ve optimizasyon hep bu doğrulanmış çekirdekte çalışıyor.', 14, BEYAZ, True, PSB),
+    ('Doğrulama', 16, AMBER, True, PSB),
+    ('Float tahmini sahayla %97 uyumlu. Geri testte toplam hata binde 4.', 14, LILA, False, PL),
+    ('Simülasyon, formülle %99,5 uyum gösterdi.', 14, LILA, False, PL),
+    ('AI bugün öneri modundadır, kararı klasik yöntem verir.', 14, BEYAZ, True, PSB),
 ], panel=True)
-notlar(S[4], 'Burada dürüst davranıyoruz. Sadece 4 çeyrek veriyle sinir ağı klasik yöntemleri geçemez, çünkü mevsimi öğrenmek için 8 çeyrekten fazla veri gerekir. Ama toplam düzeyde hata binde 4. Yapay zekâ bugün öneri modunda, AMOS olay verisi bağlanınca gerçek değerini gösterecek.')
-resim_ekle(S[4], os.path.join(CH, 's5_backtest.png'), 0.6, 4.9, 8.4, 2.52, cerceve=False)
+notlar(S[4], 'Bu slayt ürünün özellik setini veriyor: alarm, min-max, aksiyon merdiveni, bütçe optimizasyonu ve tahmin motoru. Yapay zekâ öneri modunda, kararı klasik yöntemler veriyor. Doğrulama sayıları sağ altta: float %97, geri test binde 4, simülasyon %99,5.')
 
 # ============ S6 · ÖNCELİKLENDİRME · KRİZ · BAŞARI ============
 bul(S[5], 'Title 51').text_frame.paragraphs[0].runs[0].text = 'Önceliklendirme, Kriz Dayanıklılığı ve Başarı Ölçütü'
@@ -232,10 +269,8 @@ resim_ekle(S[5], os.path.join(CH, 's6_basari.png'), 14.15, 6.2, 4.70, 3.01, cerc
 
 # ============ S7 · KAPANIŞ ============
 kutu_ekle(S[6], 1.2, 1.7, 17.6, 3.6, [
-    ('“2033’e daha büyük bir depoyla değil, her parçanın görünür,', 24, BEYAZ, False, PSB),
-    ('her kararın kurallı, her planın esnek ve her krizin önceden', 24, BEYAZ, False, PSB),
-    ('prova edilmiş olduğu bir işletim modeliyle gidiyoruz.”', 24, BEYAZ, False, PSB),
-    ('Kontrol Kulesi, bu modelin yazılım hâli.', 19, PEMBE, True, PB),
+    ('Catalyst · komponent envanteri için uçtan uca karar katmanı', 26, BEYAZ, True, PB),
+    ('Tahmin, alarm, aksiyon ve senaryo tek platformda. Tüm sayılar yeniden üretilebilir.', 18, LILA, False, PL),
 ])
 kutu_ekle(S[6], 1.2, 9.55, 17.6, 0.9, [
     ('Canlı demo ve tüm sayıların yeniden üretimi için hazırız  ·  Grup 9', 15, LILA, False, PL),
@@ -251,6 +286,6 @@ for s in S:
                     r.font.name = FONT
                     r.font.bold = True
 
-cikti = os.path.join(HERE, 'Grup9_Komponent_Kontrol_Kulesi.pptx')
+cikti = os.path.join(HERE, 'Grup9_Catalyst.pptx')
 prs.save(cikti)
 print('✓', os.path.basename(cikti), 'yazıldı —', len(S), 'slayt (limit 7)')

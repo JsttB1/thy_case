@@ -2,7 +2,7 @@
 """Jüri el notu (2 sayfa, A4, baskı dostu açık tema).
 Sayfa 1: yönetici özeti — tez, üç musluk, kanıtlar, katmanlar, başarı ölçütleri.
 Sayfa 2: jüri soruları için hazır cevaplar (CLAUDE.md §8, düzeltilmiş sayılarla).
-Çalıştırma: uv run make_handout.py  →  kontrol_kulesi_el_notu.pdf"""
+Çalıştırma: uv run make_handout.py  →  catalyst_el_notu.pdf"""
 import json, os
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -26,8 +26,8 @@ LINE = HexColor('#D8DDE6'); PANEL = HexColor('#F3F5F9')
 
 W, H = A4
 M = 16 * mm
-c = canvas.Canvas(os.path.join(HERE, 'kontrol_kulesi_el_notu.pdf'), pagesize=A4)
-c.setTitle('Komponent Kontrol Kulesi — Jüri El Notu')
+c = canvas.Canvas(os.path.join(HERE, 'catalyst_el_notu.pdf'), pagesize=A4)
+c.setTitle('Catalyst — Jüri El Notu')
 
 def tr1(v): return f'{v:,.1f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
 def tr0(v): return f'{round(v):,}'.replace(',', '.')
@@ -59,8 +59,8 @@ def chipK(x, y, w, h, deger, etiket, renk=TEAL):
 # ============================ SAYFA 1 ============================
 c.setFillColor(TEAL); c.rect(M, H - 18 * mm, 2.6 * mm, 2.6 * mm, stroke=0, fill=1)
 yaz(M + 4.4 * mm, H - 17.6 * mm, 'GLOBAL TALENT BRIDGE · FİLO BÜYÜR, ENVANTER HAZIR MI? · GRUP 9', 'Mono', 7.8, TEAL)
-yaz(M, H - 27 * mm, 'Komponent Kontrol Kulesi', 'ArB', 23, INK)
-yaz(M, H - 33.5 * mm, 'Uçaklar için bir kontrol kulesi var, komponentler için yok. 5.000 parça için görünürlük, öngörü ve aksiyon katmanı.', 'Ar', 10, MUT)
+yaz(M, H - 27 * mm, 'Catalyst', 'ArB', 23, INK)
+yaz(M, H - 33.5 * mm, 'Komponent envanteri için karar destek platformu. 5.000 parça için görünürlük, öngörü ve aksiyon.', 'Ar', 10, MUT)
 
 y = H - 40 * mm
 yaz(M, y, 'TEZ', 'Mono', 8, TEAL)
@@ -79,7 +79,7 @@ chipK(M + cw + 4 * mm, y - 22 * mm, cw, 18 * mm, tr1(K['float_fmv']) + ' → ' +
 chipK(M + 2 * (cw + 4 * mm), y - 22 * mm, cw, 18 * mm, tr1(K['phaseout']) + ' M$', 'küçülen 4 modele bağlı stok. Takvimle değil sinyalle eritilir', RED)
 y -= 30 * mm
 
-yaz(M, y, 'MODEL MAKET DEĞİL: DÖRT BAĞIMSIZ DOĞRULAMA', 'Mono', 8, TEAL)
+yaz(M, y, 'DÖRT BAĞIMSIZ DOĞRULAMA', 'Mono', 8, TEAL)
 kan = [('%97', 'float tahmini sahayla uyumlu: ' + tr0(K['float_adet']) + ' tahmin, ' + tr0(K['tamirde']) + ' gerçek'),
        ('1 numara', 'risk sıralamasının birincisi sahada gerçekten riskli çıktı'),
        ('%0,4', 'geriye dönük test: görülmeyen çeyreğin toplamı binde 4 hatayla bulundu'),
@@ -108,11 +108,11 @@ y -= 16 * mm
 yaz(M, y, 'CANLI DEMO AKIŞI (~6 DAKİKA)', 'Mono', 8, TEAL)
 demo = [('1', 'Kokpit. Envanterin genel görünümü ve vurgu kartı: stoğu biten 72 parça, siparişsiz, 11 tanesi kritik.'),
         ('2', 'Watchlist. Sıralamanın birincisi PN-101741 sahada gerçekten riskli. Yanında ne yapılacağı süre ve maliyetle sıralı.'),
-        ('3', 'Öngörü ve AI. Segmentasyon, tahmin gezgini, cold-start demosu ve geriye dönük test (binde 4 hata).'),
+        ('3', 'Öngörü ve AI. Segmentasyon, tahmin gezgini, cold-start tahmini ve geriye dönük test, binde 4 hata.'),
         ('4', 'Harita. Türkiye 16 havalimanı ve İstanbul merkezli küresel ağ. Kriz etkisi harita üzerinde.'),
         ('5', 'Senaryo. Motor ailesi krizi tek tıkla: riskli parça 134\'ten 477\'ye çıkıyor.'),
-        ('6', 'Jüri modu. Ağırlık, BER ve tampon kaydırıcıları oynatılınca sayılar anında yeniden hesaplanıyor.'),
-        ('7', 'Kapanış. Kabiliyet yatırımı yılda ' + tr1(K['kab_tasarruf']) + ' M$ getiriyor. Yazılım ekranı değil, yatırım kararı sunuyoruz.')]
+        ('6', 'Model parametreleri. Ağırlık, BER ve tampon kaydırıcıları oynatılınca sayılar anında yeniden hesaplanıyor.'),
+        ('7', 'Kapanış. Kabiliyet yatırımı yılda ' + tr1(K['kab_tasarruf']) + ' M$ getiriyor.')]
 yy = y - 5.4 * mm
 for no, t in demo:
     c.setFillColor(TEAL); c.setFont('Mono', 8.6); c.drawString(M, yy, no)
@@ -139,7 +139,7 @@ sc = [
  ('“Yeni nesil parçaların geçmişi yok, tahmin neye dayanıyor?”',
   'Tahmini benzer parçalardan başlatıyoruz, gerçek veri geldikçe modeli düzeltiyoruz. 2033 talebinin yaklaşık %65\'i bu parçalarda olduğu için bu ana senaryomuz. Dashboard\'da canlı demosu var.'),
  ('“Projeksiyonlar güvenilir mi?”',
-  'Tek bir nokta değil, %63 ile %68 arası bir aralık veriyoruz. THY ile pool arasındaki 3,6 katlık farkı da anomali olarak raporlayıp mentora sorduk. Geriye dönük kanıtlar: float %97 tuttu, sıralamanın birincisi sahada riskli, geri test binde 4 hata, simülasyon uyumu %' + tr1(MC['uyum']) + '.'),
+  'Tek bir nokta değil, %63 ile %68 arası bir aralık veriyoruz. THY ile pool arasındaki 3,6 katlık farkı da veri anomalisi olarak işaretledik. Geriye dönük kontroller: float %97 tuttu, sıralamanın birincisi sahada riskli, geri test binde 4 hata, simülasyon uyumu %' + tr1(MC['uyum']) + '.'),
  ('“Kriz hazırlığı somut olarak ne?”',
   'Kriz bizim için bir ayar değişikliği. Ya stoğun dayanma süresi kısalır ya tedarik süresi uzar. Senaryo kütüphanesi ve tek tık stres testiyle deniyoruz. Motor krizinde riskli parça 134\'ten 477\'ye çıkıyor, simülasyon aynı senaryoda ' + tr0(MC['motor']['acik_ort']) + ' parça diyor. Kriz planı önceden yazılı, her çeyrek prova ediliyor.'),
  ('“Neden en riskli birkaç parçaya odaklanmıyorsunuz?”',
@@ -150,6 +150,6 @@ for q, a in sc:
     n1 = yaz(M, yy, q, 'ArB', 9.2, INK, mak=W - 2 * M); yy -= n1 * 11.2 + 1.2 * mm
     n2 = yaz(M, yy, a, 'Ar', 8.6, MUT, mak=W - 2 * M); yy -= n2 * 10.6 + 4.2 * mm
 c.setFont('Mono', 7); c.setFillColor(DIM)
-c.drawString(M, 12 * mm, 'Kontrol Kulesi · Grup 9 · tüm sayılar üç resmi veri setinden hesaplanır. Kabiliyet tasarrufu 12,1 M$/yıl.')
+c.drawString(M, 12 * mm, 'Catalyst · Grup 9 · tüm sayılar üç resmi veri setinden hesaplanır. Kabiliyet tasarrufu 12,1 M$/yıl.')
 c.save()
-print('✓ kontrol_kulesi_el_notu.pdf yazıldı')
+print('✓ catalyst_el_notu.pdf yazıldı')

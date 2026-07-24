@@ -1,6 +1,6 @@
-# CLAUDE.md — Kontrol Kulesi Proje Bağlamı (Claude Code için)
+# CLAUDE.md — Catalyst Proje Bağlamı (Claude Code için)
 
-> **Bu dosya nedir:** Global Talent Bridge MRO hackathon projesi "Komponent Kontrol Kulesi"nin
+> **Bu dosya nedir:** Global Talent Bridge MRO hackathon projesi "Catalyst"in
 > tüm bağlamı. Claude.ai'da yürütülen analiz oturumlarının eksiksiz aktarımıdır: case, veri
 > şemaları, doğrulanmış tüm sayılar, formüller, mimari kararlar, vizyon çerçevesi, sunum planı
 > ve geri çekilen iddialar. Kullanıcı (Arda) Python ile bir dashboard + tahmin algoritması
@@ -17,9 +17,10 @@
   Turkish Technology'nin (IT şirketi) sunacağı çözüm.
 - **Takım:** Grup 9/10. AI kullanımı serbest. **Tüm veriler sentetik/dummy** (resmi case verisi,
   gerçek THY/AMOS verisi değil) — çıktılarda "sentetik/temsili" etiketi kullanılıyor.
-- **Çözüm konsepti:** **Komponent Kontrol Kulesi** — "uçaklar için kule var, komponentler için
-  yok." case'teki A (dashboard), B (sistem mimarisi) ve C (akıllı uyarı) başlıkları
-  yönlendirici ÖRNEKLERDİR (tek seçim zorunluluğu yok); önerimiz üçünü tek çatıda birleştirir.
+- **Çözüm konsepti:** **Catalyst** — komponent envanteri için karar katmanı. Case'teki A
+  (dashboard), B (sistem mimarisi) ve C (akıllı uyarı) başlıkları yönlendirici ÖRNEKLERDİR
+  (tek seçim zorunluluğu yok); önerimiz üçünü tek çatıda birleştirir. Eski "Kontrol Kulesi"
+  adı ve kule metaforu KULLANILMAZ.
   NOT (Tem 2026): eski "Seçenek D" etiketi sunumlardan çıkarıldı — var olmayan bir şık icat etmek
   jüride brief'i yanlış anlama izlenimi verebilirdi; iddia artık doğrudan söyleniyor.
 
@@ -400,7 +401,7 @@ Pool = karşılıklı sigorta (tekil operatör şoklarını yumuşatır).
 
 **Vizyon tek cümle:** *2033'e daha büyük bir depoyla değil; her parçanın görünür, her kararın
 kurallı, her planın parametrik ve her krizin önceden prova edilmiş olduğu bir işletim
-modeliyle gidilir — Kontrol Kulesi bu modelin yazılım hâlidir.*
+modeliyle gidilir — Catalyst bu modelin yazılım hâlidir.*
 
 ---
 
@@ -449,7 +450,7 @@ modeliyle gidilir — Kontrol Kulesi bu modelin yazılım hâlidir.*
 
 ## 10. Mevcut Teslimatlar ve Tasarım Sistemi
 
-**Dashboard teslimatı (Temmuz 2026, Claude Code):** `kontrol_kulesi.html` — core.py →
+**Dashboard teslimatı (Temmuz 2026, Claude Code):** `catalyst.html` — core.py →
 build_dashboard.py hattından üretilen tek dosyalık interaktif prototip. Kapsam: sermaye kokpiti,
 pool/exchange (3,6× anomali) + gayrifaal kuyruğu kartları, watchlist (159 hurda anomalisi + 150
 pool bağımlı filtreleri dahil), ABC×XYZ matrisi, tahmin gezgini + hata analizi (tam tahmin
@@ -462,7 +463,7 @@ Doğrulama: `node smoke_test.js` (baz 134/22 + 159/150 + parametre varsayılanla
 ML modeli 3 tohumlu topluluk + en-iyi-epoch geri yükleme ile deterministik; Q4 MAE ~1,97
 (en iyi klasik 1,72'nin ~%14 gerisinde — "başa baş" DEME, dürüst bulgu anlatısı kullan).
 
-**HTML dokümanları (claude.ai oturumundan; v4 günceldir, öncekilerin yerini alır):**
+**HTML dokümanları (claude.ai oturumundan; repo temizliğinde silindi, tarihsel referans):**
 - `komponent-kontrol-kulesi-brief.html` — v2 kısa ekip brief'i
 - `kontrol-kulesi-detayli-analiz.html` — v3 detaylı analiz + feature kataloğu (uzun gerekçeler)
 - `kontrol-kulesi-vizyon-dokumani.html` — **v4 MASTER**: 3 setin birleşik analizi + vizyon

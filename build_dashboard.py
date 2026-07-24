@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Kontrol Kulesi dashboard üreteci.
+Catalyst dashboard üreteci.
 
 core.py'den gelen tek çekirdeği alır, tarayıcı için kompakt bir veri paketi
 (payload) üretir ve tek dosyalık, internetsiz çalışan HTML'i yazar.
 
     python3 build_dashboard.py
 
-Çıktı: kontrol_kulesi.html  (Chart.js + CSS + JS + veri gömülü)
+Çıktı: catalyst.html  (Chart.js + CSS + JS + veri gömülü)
 """
 from __future__ import annotations
 import json, os, sys
@@ -17,7 +17,7 @@ import pandas as pd
 import core
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, 'kontrol_kulesi.html')
+OUT = os.path.join(HERE, 'catalyst.html')
 
 
 def r(x, n=1):
@@ -525,7 +525,7 @@ def render(payload: dict) -> str:
     return f"""<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>Komponent Kontrol Kulesi — 2033 Karar Destek Prototipi</title>
+<title>Catalyst — Komponent Envanter Karar Desteği</title>
 <style>{css}</style></head>
 <body>
 <script>{chartjs}</script>
