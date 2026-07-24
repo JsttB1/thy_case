@@ -85,6 +85,9 @@ with sync_playwright() as p:
     for key, name, sels, hiza in SHOTS:
         pg.click(f'.tab[data-v="{key}"]')
         pg.wait_for_timeout(1500)          # Chart.js animasyonu bitsin
+        if key == 'harita':
+            pg.click('#hZtr')              # dünya görünümü yerine okunaklı Türkiye kadrajı
+            pg.wait_for_timeout(500)
         ilk = sels[0].split('||')[0].replace('svgfit:', '')
         pg.eval_on_selector(ilk, 'el => el.scrollIntoView({block: "center"})')
         pg.wait_for_timeout(450)

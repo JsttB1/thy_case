@@ -25,12 +25,28 @@ uv run build_dashboard.py
 
 | Sekme | İçerik |
 |---|---|
-| **Kokpit** | Sermaye kokpiti ($132,9M FMV), 72 siparişsiz kırmızı vurgusu, üç para musluğu ($67,8M scrap · $23,3M→$39,0M float · $52,0M phase-out), pool/exchange kartı (3,6× anomali), gayrifaal karar kuyruğu ($8,5M↔$13,9M), iki Pareto, fragmentasyon haritası, faz yol haritası (metrik kapılı), başarı kriterleri, veri boşlukları tablosu |
+| **Kokpit** | Alarm bandı (72 siparişsiz kırmızı), KPI şeridi ($132,9M FMV), üç para akışı özet kartları, pool/exchange (3,6× anomali), gayrifaal karar kuyruğu ($8,5M↔$13,9M), sermaye/Pareto grafikleri, kırmızı liste dağılımı |
 | **Watchlist** | 5.000 PN risk skoru sıralı; filtreler (kırmızı, siparişsiz, 547, BER, phase-out, yeni nesil, hurda anomalisi 159, pool bağımlı 150); PN detayında TTS/TTR + aksiyon merdiveni + canlı Poisson stok-out eğrisi |
-| **Öngörü & AI** | Q3 mevsimselliği (kritiklikte homojen), ABC×XYZ segmentasyon matrisi, hurda kategori kırılımı + anomali dedektörü (159 PN), 2033 bandı (+%63–68), talep göçü, kategori ayrışması, phase-out planlayıcısı, TensorFlow modeli (3 tohumlu topluluk; eğitim eğrisi/MAE/scatter), model künyesi, tahmin gezgini (PN bazlı), hata analizi (kesiklilik/kritiklik/hacim), cold-start canlı Bayes tahmini, rutin dışı bakım entegrasyonu yol haritası |
+| **Öngörü & AI** | Q3 mevsimselliği (kritiklikte homojen), ABC×XYZ segmentasyon matrisi, hurda kategori kırılımı + anomali dedektörü (159 PN), 2033 bandı (+%63–68), talep göçü, kategori ayrışması, phase-out planlayıcısı, tahmin gezgini (PN bazlı), hata analizi (kesiklilik/kritiklik/hacim), cold-start canlı Bayes tahmini |
 | **Harita** | İki modlu etkileşimli ağ: **Türkiye haritası** (gömülü kontur, 16 yurt içi havalimanı, kaydır/yakınlaştır) + **küresel ağ** (İstanbul merkezli azimut görünümü, 9 yurt dışı hub, uzaklık halkaları) · stok/talep/kırmızı/MIN33/dışa bağımlı görünümleri · 2025↔2033 karşılaştırma · kriz etkisi katmanı (Senaryo ile bağlı) · tamir akış okları · kategori + kritiklik filtreleri · grup toplamları basılı case tablosuyla birebir (temsili dağıtım etiketli) · ATA×kritiklik risk ısı haritası |
-| **Senaryo** | Kriz simülatörü: senaryo kütüphanesi (motor ailesi krizi, pandemi, OEM gecikmesi, lojistik…) → 5.000 PN canlı yeniden hesap; **model parametre paneli** (kritiklik ağırlıkları, BER eşiği, alarm tamponu); dayanıklılık paneli (TTS histogramı + FMV/CLP kıtlık sensörü); filo kaydırıcısı 2025→2033 + float sayacı; kabiliyet ROI kapanışı |
+| **Senaryo** | Kriz simülatörü: senaryo kütüphanesi (motor ailesi krizi, pandemi, OEM gecikmesi, lojistik…) → 5.000 PN canlı yeniden hesap; **model parametre paneli** (kritiklik ağırlıkları, BER eşiği, alarm tamponu); dayanıklılık paneli (TTS histogramı + FMV/CLP kıtlık sensörü); filo kaydırıcısı 2025→2033 + float sayacı; kabiliyet ROI tablosu |
 
+
+## İç veri gezgini (`data_explorer.py`, PyQt6)
+
+Sunum için değil, ekibin ham veriyi kurcalaması için masaüstü araç. Dört veri seti
+(core.build() türetilmiş PN tablosu + üç ham CSV), filtreler + PN arama, beş grafik
+tipi (histogram, kategori çubuğu, dağılım, kutu, çeyreklik zaman serisi), sıralanabilir
+tablo, `describe()` istatistik sekmesi, tabloda çift tıkla tekil PN çeyreklik kırılımı,
+CSV dışa aktarım. Sayılar `core.py` çekirdeğinden gelir — `catalyst.html` ile aynı.
+
+```bash
+uv run --group gui python data_explorer.py
+```
+
+PyQt6 yalnızca `gui` bağımlılık grubunda; varsayılan `uv sync` onu kurmaz (jüri/klon
+dashboard'u üretmek için GUI'ye ihtiyaç duymaz). Başsız kendi testi (pencere açmaz):
+`QT_QPA_PLATFORM=offscreen uv run --group gui python data_explorer.py --selftest`.
 
 ## Sunum paketi (`sunum/`)
 
@@ -49,6 +65,18 @@ metinleri doldurur (7 sayfa sınırı korunur).
 
 `deck_data.json` sunum sayılarını `build_dashboard.build_payload()`'dan alır — slaytlar ile
 dashboard aynı kaynaktan beslenir, ayrışamaz. Sunucu akışı: `sunum/SUNUM_KILAVUZU.md`.
+
+## İç araç — veri gezgini (sunum değil)
+
+```bash
+uv run --group gui python data_explorer.py
+```
+
+PyQt6 masaüstü uygulaması: dört veri setini (çekirdek PN tablosu + üç ham CSV) filtreleyip
+histogram, kırılım çubuğu, saçılım, kutu ve çeyreklik seri olarak çizer; tabloyu sıralar,
+özet istatistik verir, satıra çift tıklayınca PN'in çeyreklik kırılımını açar, filtreli
+veriyi CSV'ye aktarır. PyQt6 yalnız `gui` grubundadır, `uv sync` ile kurulan varsayılan
+ortama girmez. Başsız doğrulama: `QT_QPA_PLATFORM=offscreen uv run --group gui python data_explorer.py --selftest`
 
 ## Diğer script'ler
 

@@ -117,6 +117,25 @@ def havalimani_tablosu():
         x = math.cos(lat0)*math.sin(la) - math.sin(lat0)*math.cos(la)*math.cos(dlon)
         r_['bearing'] = round(math.degrees(math.atan2(y, x)) % 360, 1)
         r_['yurtdisi'] = r_['grup'] == 'INT'
+    # --- depo katmanı (TEMSİLÎ; istasyon stoğu veride yok — dağıtım kurala bağlı) ----------
+    # depo tipi: IST ana depo; SAW/ESB/ADB + FRA/JFK ileri depo; büyük TR + büyük INT hat
+    # stoğu; küçükler stoksuz. Sayılar pay25 ağırlığıyla dağıtılır, aog kapsamı tipe bağlı.
+    ILERI = {'SAW', 'ESB', 'ADB', 'FRA', 'JFK'}
+    HAT   = {'AYT', 'ADA', 'TZX', 'GZT', 'DLM', 'LHR', 'CDG', 'DXB', 'AMS'}
+    KAPSAM = {'ana_depo': 1.0, 'ileri_depo': 0.55, 'hat_stok': 0.2, 'yok': 0.0}
+    KAT_CARPAN = {'ana_depo': 1.25, 'ileri_depo': 1.0, 'hat_stok': 0.35, 'yok': 0.0}
+    for r_ in rows:
+        tip = ('ana_depo' if r_['kod'] == 'IST' else
+               'ileri_depo' if r_['kod'] in ILERI else
+               'hat_stok' if r_['kod'] in HAT else 'yok')
+        r_['depo'] = tip
+        pay = r_['u25'] / 1200
+        r_['kalem'] = round(5000 * pay * KAT_CARPAN[tip])
+        r_['adet'] = round(24000 * pay * KAT_CARPAN[tip])          # SVC toplamı mertebesi
+        r_['aog_kapsam'] = KAPSAM[tip]
+        # IST'e lojistik süre: uçuş + elleçleme (INT'te gümrük payı) — temsilî, saat
+        r_['tsaat'] = 0.0 if r_['kod'] == 'IST' else round(
+            (r_['dist_km'] / 800 + (4.0 if r_['yurtdisi'] else 1.0)) * 2) / 2
     return rows
 
 

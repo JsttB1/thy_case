@@ -28,10 +28,12 @@ Chart.defaults.plugins.legend.labels.boxHeight = 11;
 const FL = {KIRMIZI:1, SIP:2, R547:4, BER:8, PO:16, YENI:32, SCRAPA:64, POOLB:128};
 const hasF = (i, f) => (PN.flags[i] & f) !== 0;
 const PIDX = {}; PN.id.forEach((v, i) => PIDX[v] = i);
+/* Durum sütunu sıralama anahtarı — nokta rengiyle aynı öncelik: siparişsiz > kırmızı > 547 > BER */
+PN.durum = PN.id.map((_, i) => hasF(i, FL.SIP) ? 4 : hasF(i, FL.KIRMIZI) ? 3
+                             : hasF(i, FL.R547) ? 2 : hasF(i, FL.BER) ? 1 : 0);
 
-const KR_BADGE = ['<span class="bg bg-aog">AOG KRİTİK</span>',
-                  '<span class="bg bg-kri">KRİTİK</span>',
-                  '<span class="bg bg-nk">KRİTİK DEĞİL</span>'];
+const KR_RENK = ['#E06A6A', '#E8A54C', '#56688C'];
+const krDot = i => `<span class="sdot" style="background:${KR_RENK[PN.kr[i]]}" title="${LK.kr[PN.kr[i]]}"></span>`;
 
 function foldTr(s){
   const map = {'ı':'i','İ':'i','ş':'s','Ş':'s','ğ':'g','Ğ':'g','ü':'u','Ü':'u','ö':'o','Ö':'o','ç':'c','Ç':'c'};
@@ -88,12 +90,9 @@ document.body.insertAdjacentHTML('afterbegin', `
   <div id="v-senaryo" class="view"></div>
 
   <div class="foot">
-    <b>Varsayımlar ve sınırlar.</b> Kullanılabilir stoğu FAAL ile HOMEBASE toplamı olarak alıyoruz, bu bir yorumdur.
-    İstasyon kırılımı veride yok, harita basılı case tablosuyla temsilî dağıtılmıştır.
-    Elimizde tek yıllık veri var, bu yüzden mevsimsellik tek gözleme dayanıyor.
-    THY uçağı yılda ${f1(B.thy_ucak_basi)}, pool uçağı ${f1(B.pool_ucak_basi)} parça talep ediyor. Aradaki 3,6 katlık fark veri anomalisi olarak işaretlidir.
-    Projeksiyon tek bir nokta değil bir aralık: +${pct(B.alt_pct,1)} ile +${pct(B.ust_pct,1)} arası.
-    Kritiklik ağırlıkları, BER eşiği ${String(PRM.ber_esigi).replace('.',',')}, servis hedefleri ve tampon gibi parametreler sabit değil, ayarlanabilir.
+    <b>Varsayımlar.</b> Kullanılabilir stok = FAAL + HOMEBASE. Harita temsilî dağıtım, mevsimsellik tek yıla dayanır.
+    Projeksiyon aralıktır: +${pct(B.alt_pct,1)} ile +${pct(B.ust_pct,1)} arası.
+    Kritiklik ağırlıkları, BER eşiği ${String(PRM.ber_esigi).replace('.',',')} ve servis hedefleri Senaryo sekmesinden ayarlanabilir.
     Tüm veriler resmi sentetik case setleridir, gerçek THY/AMOS verisi değildir.
   </div>
 </div>
@@ -125,13 +124,11 @@ function renderKokpit(){
   const el = $('v-kokpit');
   el.innerHTML = `
   <div class="callout red">
-    <span class="tag">Sürecin Kör Noktası</span>
+    <span class="tag">Alarm</span>
     <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
       <span class="big">${K.siparissiz} PN</span>
-      <p style="margin:0;flex:1;min-width:240px"><strong>stoğu bitmek üzere ama açık siparişi bile yok.</strong>
-      Bunların ${K.siparissiz_aog}'i, yokluğunda uçağı yerde bırakan kritik parça. Kırmızı listede toplam ${K.kirmizi} parça var,
-      hepsinde eldeki stok yenisi gelene kadar yetmiyor. Tümünü tamamlamak yalnızca <b>${mM(K.kapatma)}</b>.
-      Yani sorun stok miktarı değil, azaldığını <em>kimsenin görememesi</em>.</p>
+      <p style="margin:0;flex:1;min-width:240px"><strong>kırmızıda ve açık siparişi yok.</strong>
+      ${K.siparissiz_aog}'i AOG kritik. Kırmızı liste toplam ${K.kirmizi} parça, kapatma maliyeti <b>${mM(K.kapatma)}</b>.</p>
       <button class="btn danger" data-goto="watch" data-preset="siparissiz">Listeyi aç →</button>
     </div>
   </div>
@@ -151,37 +148,27 @@ function renderKokpit(){
       <div class="d">Kritik ama iç tamiri yok · ${K.uclu} tanesi geçmişsiz yeni nesilde</div></div>
   </div>
 
-  <h2 class="sec-h">Üç para akışı</h2>
-  <p class="sec-p">Para, stok miktarında değil üç akışta birikiyor. Bugünkü fazla ve ölü stok toplamı yalnızca 0,4 M$, yani "şişkin envanter" beklentisi veriyle doğrulanmadı.</p>
   <div class="grid g3">
-    <div class="card"><h3 style="color:${C.amber}">1 · Hurda ikamesi · ${mM(K.scrap_butce)}/yıl</h3>
-      <div class="hint">Yılda ${fmt(K.scrap25)} parça hurdaya ayrılıyor, bu talebin ${pct(K.scrap_oran)}'i. BER motoru ${fmt(K.ber_pn)} parçada
-      tamir mi değişim mi hurda mı kararını kurala bağlıyor. Bu akışın vanası burası.</div></div>
-    <div class="card"><h3 style="color:${C.blue}">2 · Tamir döngüsü sermayesi · ${mM(K.float_fmv)} → ${mM(K.float_fmv_33)}</h3>
-      <div class="hint">Tedarik süreleri değişmezse 2033'te ${mM((K.float_fmv_33 - K.float_fmv).toFixed(1)*1)} daha fazla sermaye burada bağlı kalır.
-      547 parçaya atölye kabiliyeti yatırımı yılda <b>${mM(K.kab_tasarruf)}</b> tasarruf ve <b>${mM(K.kab_sermaye)}</b> tek seferlik serbesti getiriyor.
-      Bugün bu parçalara yılda ${mM(K.kab_bugun)} dış tamir harcanıyor.</div></div>
-    <div class="card"><h3 style="color:${C.violet}">3 · Emekli filo stoğu · ${mM(K.phaseout)}</h3>
-      <div class="hint">Envanterin ${pct(K.phaseout_pct)}'si, talebi 8 yılda üçte birine inecek 4 klasik modele bağlı.
-      Bu stok takvimle değil sinyalle eritilir, böylece yarının atıl yığını bugünden yönetilir.</div></div>
+    <div class="card"><h3 style="color:${C.amber}">Hurda ikamesi · ${mM(K.scrap_butce)}/yıl</h3>
+      <div class="hint">${fmt(K.scrap25)} parça/yıl, talebin ${pct(K.scrap_oran)}'i · BER kuralı ${fmt(K.ber_pn)} parçada devrede.</div></div>
+    <div class="card"><h3 style="color:${C.blue}">Tamir döngüsü · ${mM(K.float_fmv)} → ${mM(K.float_fmv_33)}</h3>
+      <div class="hint">Kabiliyet yatırımı: yılda ${mM(K.kab_tasarruf)} tasarruf + ${mM(K.kab_sermaye)} serbesti. Bugünkü dış tamir ${mM(K.kab_bugun)}/yıl.</div></div>
+    <div class="card"><h3 style="color:${C.violet}">Emekli filo stoğu · ${mM(K.phaseout)}</h3>
+      <div class="hint">Envanterin ${pct(K.phaseout_pct)}'si küçülen 4 modelde · eritme sinyale bağlı.</div></div>
   </div>
 
   <div class="grid g2">
-    <div class="card"><h3>Pool ve değişim havuzu bugün zaten çalışıyor
+    <div class="card"><h3>Pool / değişim trafiği
       <span class="bg bg-warn" style="vertical-align:2px;margin-left:6px">VERİ ANOMALİSİ</span></h3>
-      <div class="hint">Yılda <b>${fmt(K.exch_in)} giriş, ${fmt(K.exch_out)} çıkış</b> değişim trafiği var. Bu, havuz mekanizmasının
-      şimdiden işlediğini gösteriyor. Talebin yarıdan fazlası havuzdan gelen <b>${K.pool_bagimli} parça</b> havuza bağımlı işaretli.
-      Bir anomali de var: THY uçağı yılda ${f1(B.thy_ucak_basi)} parça talep ederken pool uçağı ${f1(B.pool_ucak_basi)} talep ediyor,
-      arada <b>3,6 kat</b> fark var ve veri anomalisi olarak işaretlidir. Sistemde bu oran sabit değil, ayarlanabilir.</div>
+      <div class="hint">Yılda <b>${fmt(K.exch_in)} giriş, ${fmt(K.exch_out)} çıkış</b> · havuza bağımlı ${K.pool_bagimli} parça.
+      THY uçağı ${f1(B.thy_ucak_basi)}, pool uçağı ${f1(B.pool_ucak_basi)} parça/yıl talep ediyor, 3,6 kat fark anomali işaretli.</div>
       <div style="height:130px"><canvas id="cPool"></canvas></div></div>
-    <div class="card"><h3>Gayrifaal karar kuyruğu: rafta bekleyen karar</h3>
+    <div class="card"><h3>Gayrifaal karar kuyruğu</h3>
       <div class="grid g3" style="margin:10px 0 4px">
         <div class="kpi" style="padding:11px 13px"><div class="l">Bekleyen parça</div><div class="v" style="font-size:1.25rem">${fmt(K.gayrifaal_adet)}</div><div class="d">arızalı, karar bekliyor</div></div>
         <div class="kpi amber" style="padding:11px 13px"><div class="l">Faale döndürme</div><div class="v" style="font-size:1.25rem">${mM(K.gayrifaal_tamir)}</div><div class="d">tahmini tamir maliyeti</div></div>
         <div class="kpi teal" style="padding:11px 13px"><div class="l">Kazanılacak değer</div><div class="v" style="font-size:1.25rem">${mM(K.gayrifaal_fmv)}</div><div class="d">piyasa değeri</div></div>
-      </div>
-      <div class="hint">Net kazançlı bir havuz. Tek şart, tamiri ekonomik olmayanları önce ayıklamak. Her bekleyen parçaya
-      bir karar süresi hedefi tanımlanır, karar gecikmesi de tamir süresine eklenir.</div></div>
+      </div></div>
   </div>
 
   <div class="grid g21">
@@ -194,102 +181,11 @@ function renderKokpit(){
       <div style="height:245px"><canvas id="cPareto"></canvas></div></div>
   </div>
 
-  <div class="grid g21">
-    <div class="card"><h3>Kırmızı liste: kritikliğe göre dağılım</h3>
-      <div class="hint">Bir parça, eldeki stok yenisi gelene kadar yetmiyorsa uyarı veriyor. "Siparişsiz" olanlar uyarı var ama aksiyon yok demek.</div>
+  <div class="card"><h3>Kırmızı liste: kritikliğe göre dağılım</h3>
+      <div class="hint">Stok, yenisi gelene kadar yetmiyorsa parça kırmızıya düşer. "Siparişsiz" olanlarda uyarı var ama aksiyon yok.</div>
       <div style="height:235px"><canvas id="cDurum"></canvas></div></div>
-    <div class="card"><h3>Neden görünmüyor? Parçalı sistem haritası</h3>
-      <div class="hint">Saha gözlemi (birincil kaynak): bir komponent <b>~9 başkanlıktan</b> geçiyor,
-      kaydı <b>4-5 ayrı sistemde</b> tutuluyor. Bu sistemler birbirine bağlı değil.</div>
-      <div class="ladder">
-        <div class="step"><span class="no">→</span><span class="nm">Satış → Planlama → Satın Alma → Lojistik → Gümrük → Tesellüm → Depo → Atölye → Komponent Hizmetleri<small>Kalite tüm süreci yatay keser. Her elden geçişte veri kopuyor.</small></span></div>
-        <div class="step"><span class="no">⚠</span><span class="nm">Bozuk parçada süreç: atölye → hangar stoğu → tedarikçi → getirtme → kanibalizasyon → AOG timi<small>Tamamen telefonla ilerleyen, kayıt tutmayan bir süreç.</small></span></div>
-        <div class="step best"><span class="no">✓</span><span class="nm">Catalyst mevcut sistemleri okur, hiçbirine yazmaz. Kayıt sistemi değil, bir <b>karar katmanı.</b><small>${K.siparissiz} siparişsiz parça, eksik olan bu katmanın ölçülmüş hâli.</small></span></div>
-      </div></div>
-  </div>
 
-  <h2 class="sec-h">Yol haritası: üç faz, geçiş tarihle değil ölçütle</h2>
-  <div class="grid g3">
-    <div class="card"><h3 style="color:${C.teal}">Faz 1 · Görünürlük <span class="note">ilk ~12 ay</span></h3>
-      <div class="hint">Salt okunur birleşik kayıt, sermaye kokpiti ve kırmızı liste raporu. Daha ilk teslimat gününde
-      somut değer üretir: stoğu biten <b>${K.siparissiz} parçanın yakalanması.</b><br>
-      <b style="color:${C.text}">Bir sonraki faza geçiş:</b> veri kalitesi puanı eşiğine bağlı, tarihe değil.</div></div>
-    <div class="card"><h3 style="color:${C.blue}">Faz 2 · Öngörü <span class="note">öneri modu</span></h3>
-      <div class="hint">Segmentli tahmin, insan onaylı min-max önerileri, geçmişi olmayan parça tahmini, hurda ve satın alma planı.
-      Stres testi ve çeyreklik prova ritmi de burada başlar.<br>
-      <b style="color:${C.text}">Bir sonraki faza geçiş:</b> tahmin doğruluğu ve öneri kabul oranı eşiğine bağlı.</div></div>
-    <div class="card"><h3 style="color:${C.violet}">Faz 3 · Aksiyon</h3>
-      <div class="hint">Otomatik uyarı-aksiyon bağı, havuz dengeleme, operatör portalı ve kriz planının sisteme gömülü kuralları.
-      Bu fazda "uyarı var ama sipariş yok" durumu artık mümkün olmuyor.<br>
-      <b style="color:${C.text}">İlke:</b> hiçbir kaynak sisteme yazılmaz. Kayıt değil, karar katmanıyız.</div></div>
-  </div>
-
-  <div class="card" style="margin-top:2px"><h3>Mimari: kayıt sistemlerinin üzerine bir karar katmanı</h3>
-    <div class="hint">Mevcut sistemler değiştirilmiyor, sadece
-    okunuyor. Veriler tek bir modelde birleşiyor ve motorlar bunun üzerinde çalışıyor. Hiçbir kaynağa geri yazılmadığı
-    için entegrasyon riski neredeyse sıfır ve ilk değer ilk günden geliyor.</div>
-    <div style="overflow-x:auto"><svg viewBox="0 0 1000 232" style="min-width:820px;width:100%">
-      <defs><marker id="mAr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto">
-        <path d="M0,0.5 L7.5,4 L0,7.5 Z" fill="#4FC1B0"/></marker></defs>
-      ${['AMOS', 'TRAX', '“Mars”', 'ÜPK', 'Depo / bin-raf'].map((t, i) => `
-        <rect x="12" y="${14 + i * 42}" width="118" height="32" rx="6" fill="#182338" stroke="#263450"/>
-        <text x="71" y="${34 + i * 42}" text-anchor="middle" font-size="11" fill="#9AA8C0" font-family="Inter,sans-serif">${t}</text>
-        <line x1="130" y1="${30 + i * 42}" x2="186" y2="112" stroke="#4FC1B0" stroke-width="1.2" opacity=".55" marker-end="url(#mAr)"/>`).join('')}
-      <text x="71" y="228" text-anchor="middle" font-size="9.5" fill="#77869C" font-family="'JetBrains Mono',monospace">4–5 KOPUK KAYIT SİSTEMİ</text>
-      <rect x="190" y="86" width="118" height="52" rx="8" fill="rgba(79,193,176,.1)" stroke="#4FC1B0"/>
-      <text x="249" y="108" text-anchor="middle" font-size="11.5" fill="#EAF0F7" font-family="Inter,sans-serif" font-weight="600">CDC</text>
-      <text x="249" y="124" text-anchor="middle" font-size="9.5" fill="#4FC1B0" font-family="'JetBrains Mono',monospace">SALT OKUNUR</text>
-      <line x1="308" y1="112" x2="352" y2="112" stroke="#4FC1B0" stroke-width="1.6" marker-end="url(#mAr)"/>
-      <rect x="356" y="86" width="128" height="52" rx="8" fill="#182338" stroke="#263450"/>
-      <text x="420" y="108" text-anchor="middle" font-size="11.5" fill="#EAF0F7" font-family="Inter,sans-serif" font-weight="600">Olay omurgası</text>
-      <text x="420" y="124" text-anchor="middle" font-size="9" fill="#77869C" font-family="'JetBrains Mono',monospace">event-sourced · gerçek TAT</text>
-      <line x1="484" y1="112" x2="528" y2="112" stroke="#4FC1B0" stroke-width="1.6" marker-end="url(#mAr)"/>
-      <rect x="532" y="86" width="128" height="52" rx="8" fill="#182338" stroke="#263450"/>
-      <text x="596" y="108" text-anchor="middle" font-size="11.5" fill="#EAF0F7" font-family="Inter,sans-serif" font-weight="600">Tek veri modeli</text>
-      <text x="596" y="124" text-anchor="middle" font-size="9" fill="#77869C" font-family="'JetBrains Mono',monospace">PN + seri + durum + konum</text>
-      ${['Tahmin (SBA+AI)', 'Min-max + emniyet', 'Alarm (TTS/TTR)', 'Senaryo + Monte Carlo', 'Önceliklendirme'].map((t, i) => `
-        <line x1="660" y1="112" x2="704" y2="${30 + i * 42}" stroke="#4FC1B0" stroke-width="1.1" opacity=".55" marker-end="url(#mAr)"/>
-        <rect x="708" y="${14 + i * 42}" width="140" height="32" rx="6" fill="#182338" stroke="#263450"/>
-        <text x="778" y="${34 + i * 42}" text-anchor="middle" font-size="10" fill="#9AA8C0" font-family="Inter,sans-serif">${t}</text>`).join('')}
-      <line x1="848" y1="112" x2="892" y2="112" stroke="#4FC1B0" stroke-width="1.6" marker-end="url(#mAr)"/>
-      <rect x="896" y="72" width="94" height="80" rx="8" fill="rgba(79,193,176,.1)" stroke="#4FC1B0"/>
-      <text x="943" y="106" text-anchor="middle" font-size="11" fill="#EAF0F7" font-family="Inter,sans-serif" font-weight="600">Catalyst</text>
-      <text x="943" y="133" text-anchor="middle" font-size="8.5" fill="#77869C" font-family="'JetBrains Mono',monospace">5 ekran + alarm</text>
-      <path d="M896,190 Q460,224 132,190" fill="none" stroke="#E06A6A" stroke-width="1.4" stroke-dasharray="7,5"/>
-      <line x1="500" y1="196" x2="524" y2="216" stroke="#E06A6A" stroke-width="2"/>
-      <line x1="524" y1="196" x2="500" y2="216" stroke="#E06A6A" stroke-width="2"/>
-      <text x="512" y="188" text-anchor="middle" font-size="10" fill="#E06A6A" font-family="'JetBrains Mono',monospace">GERİ YAZMA YOK · kaynaklara dokunulmaz</text>
-    </svg></div></div>
-
-  <h2 class="sec-h">Başarı kriterleri: çalıştığını nasıl anlarız?</h2>
-  <div class="grid g4">
-    <div class="kpi teal"><div class="l">Yerde bekleyen uçak oranı</div><div class="v">↓</div>
-      <div class="d">Ana ölçüt. Parça yüzünden yerde bekleyen uçak yüzdesi düşer, her saati gelir kaybı.</div></div>
-    <div class="kpi red"><div class="l">Siparişsiz kırmızı</div><div class="v">${K.siparissiz} → 0</div>
-      <div class="d">Her uyarı bir aksiyona bağlanır, "uyarı var sipariş yok" durumu ortadan kalkar.</div></div>
-    <div class="kpi"><div class="l">Kritik parça karşılama</div><div class="v">≥ %97–98</div>
-      <div class="d">Servis hedefi kritikliğe göre değişir: kritik parçada daha yüksek tutulur.</div></div>
-    <div class="kpi"><div class="l">Erken yakalama</div><div class="v">↑</div>
-      <div class="d">Stok bitişlerinin tedarik süresi dolmadan yakalanma oranı. Uyarı kalitesinin ölçüsü.</div></div>
-    <div class="kpi"><div class="l">Tahmin doğruluğu</div><div class="v">↑</div>
-      <div class="d">Bu eşik geçilmeden otomasyona geçilmiyor. Öneri kabul oranıyla birlikte izlenir.</div></div>
-    <div class="kpi amber"><div class="l">Bağlı sermaye sınırı</div><div class="v">${mM(K.float_fmv)}</div>
-      <div class="d">Servis, stok şişirilerek değil tedarik süresi kısaltılarak korunur.</div></div>
-    <div class="kpi"><div class="l">Acil sevkiyat maliyeti</div><div class="v">↓</div>
-      <div class="d">Erken yakalanan uyarı ucuz kanaldan çözülür, acil kargo harcaması düşer.</div></div>
-    <div class="kpi"><div class="l">Hurda oranı</div><div class="v">${pct(K.scrap_oran)}</div>
-      <div class="d">İzlenir ve anomali dedektörüyle denetlenir. BER kuralı bu akışın vanası.</div></div>
-  </div>
-
-  <div class="card" style="margin-top:16px"><h3>Veri boşlukları: neyi bilmiyoruz, üründe nereden gelecek?</h3>
-    <div class="tw" style="max-height:none"><table><thead><tr>
-      <th>Eksik veri</th><th>Bugünkü etkisi</th><th>Ürünün gerçeğinde kaynağı</th></tr></thead><tbody>
-      <tr><td>İstasyon bazlı stok</td><td>Harita temsilî dağıtımla çalışıyor</td><td>Faz 1'de istasyon etiketli depo kayıtları</td></tr>
-      <tr><td>Parça seri numarası</td><td>Tek tek parça takibi yapılamıyor</td><td>Faz 1'de tek komponent kaydı</td></tr>
-      <tr><td>Tek yıllık tarih</td><td>Mevsimsellik tek gözleme dayanıyor</td><td>AMOS arşivi ve canlı veri akışı</td></tr>
-      <tr><td>Envanter tek kesit</td><td>Stok akışı izlenemiyor, tek anlık fotoğraf</td><td>Faz 1'den itibaren günlük stok kesitleri</td></tr>
-      <tr><td>Fiyat geçmişi</td><td>Kıtlık sensörü ileriye dönük bir tasarım</td><td>Piyasa fiyat servisi ve sipariş tarihçesi</td></tr>
-    </tbody></table></div></div>`;
+  `;
 
   /* sermaye doughnut */
   const kalan = +(K.fmv - K.svc_fmv - K.tamirde_fmv - K.gayrifaal_fmv).toFixed(1);
@@ -345,9 +241,8 @@ function renderWatch(){
   const el = $('v-watch');
   el.innerHTML = `
   <h2 class="sec-h">Watchlist: risk skoruna göre sıralı ${fmt(K.pn)} parça</h2>
-  <p class="sec-p">Risk skoru bir parçanın kritikliğini, yıllık talebini ve tedarik süresini birlikte değerlendirir. Kısaca,
-  herhangi bir anda serviste olmayacak beklenen parça miktarını gösterir. Listenin birincisi
-  <b class="mono" style="color:${C.teal}">PN-${PN.id[0]}</b> sahada gerçekten riskli çıktı, yani ölçü masa başı bir hesap değil.</p>
+  <p class="sec-p">Risk skoru kritikliği, yıllık talebi ve tedarik süresini birlikte tartar.
+  Satıra tıklayınca parça detayı ve aksiyon seçenekleri açılır.</p>
   <div class="card">
     <div class="ctl">
       <input type="text" id="wQ" placeholder="PN / kategori / model ara…" style="flex:1;min-width:170px">
@@ -362,8 +257,13 @@ function renderWatch(){
       <span class="chip" data-f="${FL.POOLB}">Pool bağımlı ${K.pool_bagimli}</span>
       <span class="chip" id="wClear">✕ temizle</span>
     </div>
+    <div class="note" style="margin:2px 0 7px">Kritiklik:
+      <span class="sdot" style="background:#E06A6A"></span> AOG, uçağı yerde bırakır ·
+      <span class="sdot" style="background:#E8A54C"></span> kritik ·
+      <span class="sdot" style="background:#56688C"></span> kritik değil
+      &nbsp;·&nbsp; Durum, parçanın bugünkü hâlidir · ayrıntı için satıra tıklayın</div>
     <div class="tw"><table id="wTbl"><thead><tr>
-      <th>PN</th><th>Model</th><th>Kategori</th><th>Kritiklik</th><th>Durum</th>
+      <th>PN</th><th>Model</th><th>Kategori</th><th>Kritiklik</th><th data-k="durum">Durum</th>
       <th class="n" data-k="svc">SVC</th><th class="n" data-k="tts">TTS / TTR</th>
       <th class="n" data-k="t25">Talep 25→33</th><th class="n" data-k="min33">Min–Max 33</th>
       <th class="n" data-k="clp">CLP</th><th class="n" data-k="risk">Risk</th>
@@ -388,10 +288,30 @@ function renderWatch(){
     if(ch){ const f = +ch.dataset.f; W.flags.has(f) ? W.flags.delete(f) : W.flags.add(f); W.apply(); return; }
     const th = e.target.closest('th[data-k]');
     if(th){ const k = th.dataset.k;
-      if(W.sort.k === k) W.sort.asc = !W.sort.asc; else { W.sort.k = k; W.sort.asc = false; }
+      /* üçlü döngü: 1. tık azalan, 2. tık artan, 3. tık varsayılana (risk azalan) dönüş */
+      if(W.sort.k === k && !W.sort.asc) W.sort.asc = true;
+      else if(W.sort.k === k && W.sort.asc){ W.sort.k = 'risk'; W.sort.asc = false; }
+      else { W.sort.k = k; W.sort.asc = false; }
       drawRows(); return; }
+    const wg = e.target.closest('.wgo');
+    if(wg){
+      if(!W.hedef){
+        const s = $('wHedef');
+        if(s){ s.style.borderColor = '#E06A6A'; }
+        const n = $('wHedefNot');
+        if(n){ n.textContent = 'önce hedef istasyonu seçin'; n.style.color = '#E06A6A'; }
+        return;
+      }
+      showView('harita');
+      if(H._parcaGoster) H._parcaGoster(W.sel, W.hedef, wg.dataset.t);
+      window.scrollTo(0, 0);
+      return;
+    }
     const tr = e.target.closest('tr[data-i]');
     if(tr){ W.sel = +tr.dataset.i; drawDetail(W.sel); $('wDet').scrollIntoView({behavior:'smooth', block:'nearest'}); }
+  });
+  el.addEventListener('change', e => {
+    if(e.target && e.target.id === 'wHedef'){ W.hedef = e.target.value; e.target.style.borderColor = ''; }
   });
 
   function filtered(){
@@ -418,15 +338,19 @@ function renderWatch(){
     if(th) th.classList.add(W.sort.asc ? 'asc' : 'sorted');
     const idx = filtered(), show = idx.slice(0, 300), rmax = PN.risk[0] || 1;
     $('wTbl').querySelector('tbody').innerHTML = show.map(i => {
-      const fl = [];
-      if(hasF(i,FL.SIP)) fl.push('<span class="bg bg-red">SİPARİŞSİZ</span>');
-      else if(hasF(i,FL.KIRMIZI)) fl.push('<span class="bg bg-red">KIRMIZI</span>');
-      if(hasF(i,FL.R547)) fl.push('<span class="bg bg-warn">547</span>');
-      if(hasF(i,FL.BER)) fl.push('<span class="bg bg-warn">BER</span>');
+      const st = [];
+      if(hasF(i,FL.SIP)) st.push(['bg-red', 'TÜKENİYOR', 'stok yenisi gelmeden bitiyor ve sipariş yok']);
+      else if(hasF(i,FL.KIRMIZI)) st.push(['bg-warn', 'SİPARİŞTE', 'stok bitiyor ama yenisi sipariş edildi']);
+      if(hasF(i,FL.R547)) st.push(['bg-sari', 'DIŞA BAĞIMLI', 'iç tamiri yok, dış istasyona bağımlı']);
+      if(hasF(i,FL.BER)) st.push(['bg-mor', 'HURDA ADAYI', 'tamir ekonomik değil, bozulunca yenilenir']);
+      const dHtml = st.length
+        ? `<span class="bg ${st[0][0]}" title="${st.map(s => s[2]).join(' · ')}">${st[0][1]}</span>`
+        : `<span style="color:${C.dim}">—</span>`;
+      const krHtml = krDot(i);
       const ttsTxt = PN.tts[i] >= 9999 ? '∞' : fmt(PN.tts[i]);
       const rw = Math.max(4, 100 * PN.risk[i] / rmax);
       return `<tr data-i="${i}"><td class="pn-link">PN-${PN.id[i]}</td><td>${LK.mdl[PN.mdl[i]]}</td>
-      <td>${LK.sub[PN.sub[i]]}</td><td>${KR_BADGE[PN.kr[i]]}</td><td>${fl.join(' ') || '<span style="color:'+C.dim+'">—</span>'}</td>
+      <td>${LK.sub[PN.sub[i]]}</td><td style="text-align:center">${krHtml}</td><td>${dHtml}</td>
       <td class="n">${fmt(PN.svc[i])}</td><td class="n" style="color:${PN.tts[i] < PN.ttr[i] ? C.red : C.muted}">${ttsTxt} / ${fmt(PN.ttr[i])}g</td>
       <td class="n">${fmt(PN.t25[i])} → ${fmt(PN.t33[i])}</td><td class="n">${fmt(PN.min33[i])}–${fmt(PN.max33[i])}</td>
       <td class="n">${mUsd(PN.clp[i])}</td>
@@ -440,35 +364,47 @@ function renderWatch(){
   function ladder(i){
     const ops = [];
     if(PN.exin[i] + PN.exout[i] > 0)
-      ops.push({ad:'Havuzdan değişim', sm:'havuz zaten çalışıyor', gun:3, m:.10 * PN.clp[i], tag:'varsayılan ücret liste fiyatının %10\'u'});
+      ops.push({t:'pool', ad:'Havuzdan değişim', sm:'değişim ağı bugün de işliyor', gun:3, m:.10 * PN.clp[i], tag:'ücret varsayımı liste fiyatının %10\'u'});
     if(PN.ato[i] && PN.tic[i] != null)
-      ops.push({ad:'İç atölye tamiri', sm:'iç tamir mümkün', gun:PN.tic[i], m:PN.icrep[i]});
-    ops.push({ad:'Dış tamir', sm:hasF(i,FL.BER) ? 'Dikkat: bu parçada tamir ekonomik değil' : 'standart kanal', gun:PN.tdis[i], m:PN.disrep[i]});
-    ops.push({ad:'Hızlandırılmış dış tamir', sm:'ek ücretle daha hızlı', gun:Math.ceil(PN.tdis[i]*.6), m:PN.disrep[i]*1.5, tag:'varsayılan süre 0,6 kat, maliyet 1,5 kat'});
-    ops.push({ad:'Yeni satın alma', sm:'üreticiden tedarik', gun:PN.tsat[i], m:PN.clp[i]});
+      ops.push({t:'ictamir', ad:'İç atölye tamiri', sm:'iç tamir mümkün', gun:PN.tic[i], m:PN.icrep[i]});
+    ops.push({t:'distamir', ad:'Dış tamir', sm:hasF(i,FL.BER) ? 'dikkat: bu parçada tamir ekonomik değil' : 'standart tamir kanalı', gun:PN.tdis[i], m:PN.disrep[i]});
+    ops.push({t:'hizli', ad:'Hızlandırılmış dış tamir', sm:'ek ücretle öne alınır', gun:Math.ceil(PN.tdis[i]*.6), m:PN.disrep[i]*1.5, tag:'süre 0,6 katına iner, maliyet 1,5 kat'});
+    ops.push({t:'alim', ad:'Yeni satın alma', sm:'üreticiden sıfır tedarik', gun:PN.tsat[i], m:PN.clp[i]});
     if(PN.gay[i] > 0)
-      ops.push({ad:'Kayıtlı kanibalizasyon', sm:PN.gay[i] + ' adet arızalı donör var', gun:1, m:null, tag:'donör borç defterine işlenir'});
+      ops.push({t:'sokum', ad:'Donörden söküm', sm:PN.gay[i] + ' arızalı donör rafta bekliyor', gun:1, m:null, tag:'kayıt altında, borç defterine işlenir'});
     ops.sort((a,b) => a.gun - b.gun);
     return ops.map((o,n) => `<div class="step${n===0?' best':''}"><span class="no">${n+1}</span>
-      <span class="nm">${o.ad}<small>${o.sm}${o.tag ? ' · ' + o.tag : ''}</small></span>
+      <span class="nm">${o.ad}<small>${o.sm}${o.tag ? ' · ' + o.tag : ''}</small>
+        <span class="chip wgo" data-t="${o.t}" style="margin-top:5px;padding:1px 9px;font-size:.64rem;display:inline-block">🗺 haritada göster</span></span>
       <span class="m"><b>${o.gun} gün</b><span>${o.m == null ? 'tamir borcu' : mUsd(o.m)}</span></span></div>`).join('');
   }
 
   function drawDetail(i){
     const tts = PN.tts[i], ttr = PN.ttr[i];
     const mx = Math.max(Math.min(tts, ttr*3), ttr, 1);
+    const d33 = PN.t25[i] > 0 ? Math.round(100 * (PN.t33[i] / PN.t25[i] - 1)) : null;
+    const t33lo = Math.min(PN.t33a[i], PN.t33b[i]), t33hi = Math.max(PN.t33a[i], PN.t33b[i]);
+    const muL = PN.rate33[i] * PN.lead[i] / PRM.ceyrek_gun;          // tedarik süresi boyunca beklenen talep
+    const muC = Math.ceil(muL), ssC = Math.max(0, PN.min33[i] - muC);
+    const nnF = PN.nn4[i] != null ? +(PN.nn4[i] - PN.q4[i]).toFixed(1) : null;
+    /* tahmin gerekçesi: tek kısa cümle — sürücü + yöntem */
+    const kesQ = [PN.q1[i], PN.q2[i], PN.q3[i], PN.q4[i]].some(v => !v);
+    const grw = LK.mdl_b[PN.mdl[i]], grwS = String(grw).replace('.', ',');
+    const gcum = hasF(i,FL.YENI)
+      ? `Geçmişi yok: benzerlerinden başlar, ${LK.mdl[PN.mdl[i]]} filosuyla ×${grwS} ölçeklenir.`
+      : `${LK.mdl[PN.mdl[i]]} filosu ×${grwS} ${grw >= 1 ? 'büyüyor' : 'küçülüyor'}, talep bu çarpanla ölçekleniyor.`;
     const fl = [];
-    if(hasF(i,FL.SIP)) fl.push('<span class="bg bg-red">KIRMIZI + SİPARİŞSİZ</span>');
-    else if(hasF(i,FL.KIRMIZI)) fl.push('<span class="bg bg-red">KIRMIZI</span>');
-    if(hasF(i,FL.R547)) fl.push('<span class="bg bg-warn">RİSK LİSTESİ 547</span>');
-    if(hasF(i,FL.BER)) fl.push('<span class="bg bg-warn">BER ADAYI</span>');
+    if(hasF(i,FL.SIP)) fl.push('<span class="bg bg-red">TÜKENİYOR · SİPARİŞSİZ</span>');
+    else if(hasF(i,FL.KIRMIZI)) fl.push('<span class="bg bg-warn">TÜKENİYOR · SİPARİŞTE</span>');
+    if(hasF(i,FL.R547)) fl.push('<span class="bg bg-sari">DIŞA BAĞIMLI</span>');
+    if(hasF(i,FL.BER)) fl.push('<span class="bg bg-mor">HURDA ADAYI</span>');
     if(hasF(i,FL.PO)) fl.push('<span class="bg bg-nk">PHASE-OUT MODELİ</span>');
     if(hasF(i,FL.YENI)) fl.push('<span class="bg bg-teal">YENİ NESİL</span>');
     $('wDet').innerHTML = `
     <div class="card" style="margin-top:14px">
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
         <h3 class="mono" style="font-size:1.15rem;color:${C.teal}">PN-${PN.id[i]}</h3>
-        ${KR_BADGE[PN.kr[i]]}<span style="color:${C.dim};font-size:.8rem">${LK.sub[PN.sub[i]]} · ${LK.mdl[PN.mdl[i]]} · risk ${f1(PN.risk[i])}</span>
+        ${krDot(i)} <span style="color:${C.dim};font-size:.8rem">${LK.sub[PN.sub[i]]} · ${LK.mdl[PN.mdl[i]]} · risk ${f1(PN.risk[i])}</span>
         <span style="margin-left:auto">${fl.join(' ')}</span>
       </div>
       <div class="grid g2" style="margin:0">
@@ -491,7 +427,13 @@ function renderWatch(){
         </div>
         <div>
           <h3 style="font-size:.83rem;color:${C.muted}">Aksiyon sıralayıcı: seçenekler süreye göre</h3>
-          <div class="ladder" style="margin-top:9px">${ladder(i)}</div>
+          <div class="ctl" style="margin:7px 0 6px;gap:7px">
+            <span class="note">Hedef istasyon</span>
+            <select id="wHedef"><option value="">seçiniz…</option>${DATA.harita.kod.map(k =>
+              `<option value="${k}"${W.hedef === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
+            <span class="note" id="wHedefNot">rota çizmek için önce hedef, sonra 🗺</span>
+          </div>
+          <div class="ladder" style="margin-top:4px">${ladder(i)}</div>
           <div class="hint" style="margin-top:9px">Seçenekler süreye göre sıralanır. AOG saatlik maliyeti girilirse süre ve maliyet birlikte puanlanabilir.</div>
           <h3 style="font-size:.83rem;color:${C.muted};margin-top:14px">Canlı stok yetmeme eğrisi</h3>
           <div style="height:170px;margin-top:7px"><canvas id="cPnCurve"></canvas></div>
@@ -499,8 +441,60 @@ function renderWatch(){
           İşaretler mevcut stoğu ve önerilen 2033 MIN değerini gösterir.</div>
         </div>
       </div>
+      <div style="border-top:1px solid var(--line-soft);margin-top:15px;padding-top:12px">
+        <h3 style="font-size:.83rem;color:${C.muted}">Tahmin: 2025 gerçekleşen ve 2033 çeyreklik profil</h3>
+        <div class="grid g21" style="margin:8px 0 0">
+          <div style="height:205px"><canvas id="cPnTah"></canvas></div>
+          <div style="font-size:.775rem;color:${C.dim};line-height:1.6;margin-top:2px">
+            <div style="margin-bottom:8px"><b style="color:${C.text}">2033 yıllık aralık:</b>
+              <span class="mono">${fmt(t33lo)} – ${fmt(t33hi)}</span> adet · orta
+              <b class="mono" style="color:${C.teal}">${fmt(PN.t33[i])}</b> · değişim
+              <b>${d33 == null ? '—' : (d33 >= 0 ? '+%' : '−%') + Math.abs(d33)}</b><br>
+              iki yöntemin uçları: model bazlı ölçek ile THY/pool karışımı</div>
+            <div style="margin-bottom:8px"><b style="color:${C.text}">Stok önerisi:</b>
+              MIN <b class="mono">${fmt(PN.min33[i])}</b> = tedarik süresi talebi ${fmt(muC)} + emniyet ${fmt(ssC)}
+              · MAX <b class="mono">${fmt(PN.max33[i])}</b> · servis hedefi ${pct(PN.sh[i]*100,0)}</div>
+            ${nnF != null ? `<div style="margin-bottom:8px"><b style="color:${C.text}">Ağ kontrolü Q4:</b>
+              tahmin <span class="mono">${String(PN.nn4[i]).replace('.',',')}</span> · gerçek
+              <span class="mono">${fmt(PN.q4[i])}</span> · fark
+              <b class="mono" style="color:${Math.abs(nnF) <= 3 ? C.teal : C.amber}">${nnF >= 0 ? '+' : '−'}${String(Math.abs(nnF)).replace('.',',')}</b></div>` : ''}
+            <div><b style="color:${C.text}">Sürücü:</b> ${LK.mdl[PN.mdl[i]]} filosu ×${String(LK.mdl_b[PN.mdl[i]]).replace('.',',')}
+              · ${hasF(i,FL.YENI) ? 'cold-start: tahmin benzerlerinden başlar, gözlemle parçaya yakınsar'
+                                  : 'kesikli talep yöntemi, mevsim katsayısı bütçe düzeyinde'}</div>
+          </div>
+        </div>
+        <div class="hint" style="margin:10px 0 0"><b style="color:${C.text}">Neden bu tahmin?</b>
+          ${gcum} ${kesQ ? 'Talep kesikli, yöntem ona göre seçildi.' : 'Talep düzenli, mevsim katsayısı uygulandı.'}</div>
+      </div>
     </div>`;
     drawCurve(i);
+    drawTah(i);
+  }
+
+  function drawTah(i){
+    /* portföy mevsim profili (Q3 zirvesi) 2033 çeyrek düzeyine uygulanır; ortalama korunur */
+    const ceyT = DATA.ceyrek.thy.map((v, j) => v + DATA.ceyrek.pool[j]);
+    const ort = ceyT.reduce((a, b) => a + b, 0) / 4;
+    const sez = ceyT.map(v => v / ort);
+    const q33 = sez.map(f => PN.rate33[i] * f);
+    const lo = q33.map(m => Math.max(0, m - 1.2816 * Math.sqrt(Math.max(m, .25))));
+    const hi = q33.map(m => m + 1.2816 * Math.sqrt(Math.max(m, .25)));
+    const ds = [
+      {type:'bar', label:'2025 gerçekleşen', data:[PN.q1[i],PN.q2[i],PN.q3[i],PN.q4[i]],
+       backgroundColor:'rgba(91,143,214,.75)', borderRadius:3},
+      {type:'bar', label:'2033 profil, mevsimli', data:q33,
+       backgroundColor:'rgba(79,193,176,.4)', borderColor:C.teal, borderWidth:1, borderRadius:3},
+      {type:'line', label:'2033 belirsizlik p10–p90', data:hi, borderColor:'rgba(232,163,61,0)',
+       pointRadius:0, fill:'+1', backgroundColor:'rgba(232,163,61,.15)'},
+      {type:'line', label:'', data:lo, borderColor:'rgba(232,163,61,0)', pointRadius:0}
+    ];
+    if(PN.nn4[i] != null)
+      ds.push({type:'line', label:'Sinir ağı Q4', data:[null,null,null,PN.nn4[i]], showLine:false,
+        pointRadius:5.5, pointStyle:'rectRot', borderColor:C.violet, backgroundColor:C.violet});
+    new Chart($('cPnTah'), {data:{labels:['Q1','Q2','Q3','Q4'], datasets:ds},
+      options:{maintainAspectRatio:false, animation:{duration:200},
+        scales:{y:{beginAtZero:true, ticks:{precision:0}}},
+        plugins:{legend:{labels:{boxWidth:10, filter: it => it.text !== ''}}}}});
   }
 
   function drawCurve(i){
@@ -544,21 +538,16 @@ function renderOngoru(){
   const el = $('v-ongoru');
   const ml = DATA.ml;
   el.innerHTML = `
-  <h2 class="sec-h">Talep yapısı: klasik yöntemler neden yanılır?</h2>
+  <h2 class="sec-h">Talep yapısı</h2>
   <div class="grid g21">
     <div class="card"><h3>2025 çeyreklik talep ve hurda</h3>
-      <div class="hint">Yaz çeyreğinde talep diğerlerinin ${pct(K.q3_pct)} üstüne çıkıyor. Bu etki tüm kritiklik sınıflarında benzer,
-      bu yüzden tek bir mevsim katsayısı kullanılabiliyor. Yıl içindeki artış ise düşük, ${pct(K.q1q4_pct)}, ve tek yıllık
-      veriye dayandığı için güveni sınırlı. Tek parça için canlı stok eğrisini Watchlist parça detayında görebilirsiniz.</div>
+      <div class="hint">Yaz çeyreği diğerlerinin ${pct(K.q3_pct)} üstünde, etki kritiklik sınıflarında homojen.
+      Yıl içi artış düşük: ${pct(K.q1q4_pct)}.</div>
       <div style="height:270px"><canvas id="cCey"></canvas></div></div>
     <div class="card"><h3>Talep ne kadar kesikli?</h3>
-      <div class="hint">Bir parça yılda ortalama <b>${fmt(K.medyan_talep)} adet</b> hareket ediyor ve parça-çeyreklerin ${pct(K.sifir_ceyrek)}'ı tamamen sıfır.
-      Talep bu kadar seyrek olunca yöntem seçimi değişiyor.</div>
-      <div class="ladder">
-        <div class="step"><span class="no">→</span><span class="nm">${fmt(K.kesikli)} parçanın talebi kesikli<small>en az bir çeyreği sıfır</small></span></div>
-        <div class="step"><span class="no">→</span><span class="nm">Hareketli ortalama ve sabit min-max bu profilde düzenli olarak yanılıyor<small>tasarım kararının veri gerekçesi</small></span></div>
-        <div class="step best"><span class="no">✓</span><span class="nm">Bu yüzden kesikli talep için tasarlanmış yöntemler kullanıyoruz<small>servis hedefi kritikliğe göre değişir</small></span></div>
-      </div></div>
+      <div class="hint">Medyan talep <b>${fmt(K.medyan_talep)} adet/yıl</b> · parça-çeyreklerin ${pct(K.sifir_ceyrek)}'ı sıfır ·
+      ${fmt(K.kesikli)} parçanın en az bir çeyreği boş. Bu profilde kesikli talep yöntemleri kullanılır,
+      servis hedefi kritikliğe göre değişir.</div></div>
   </div>
 
   <h2 class="sec-h">Segmentasyon: hangi parçaya hangi yöntem?</h2>
@@ -567,10 +556,7 @@ function renderOngoru(){
       <div class="hint">Parçaları iki eksende sınıflıyoruz. Satırlar hacme göre, en çok talep gören A'dan az talep gören C'ye.
       Sütunlar düzenliliğe göre, istikrarlı X'ten öngörülemez Z'ye. Her hücrede kaç parça olduğu ve talep payı yazıyor.</div>
       <div style="overflow:auto"><table class="heat" id="tAbc"></table></div>
-      <div class="hint" style="margin-top:9px">Her sütuna uygun yöntem atanıyor. İstikrarlı parçalarda klasik yöntemler yeterli,
-      düzensiz parçalarda kesikli talep yöntemleri gerekiyor. En yüksek hacimli grupta bile
-      ${fmt(DATA.abcxyz.sayi[0][0] + DATA.abcxyz.sayi[0][1] + DATA.abcxyz.sayi[0][2])} parça olması, kapsamın kısa bir listeyle
-      yönetilemeyeceğini, otomasyonun şart olduğunu gösteriyor.</div></div>
+      <div class="hint" style="margin-top:9px">Sütun başına yöntem atanır: istikrarlıda klasik, düzensizde kesikli talep yöntemleri.</div></div>
     <div class="card"><h3>Hurda bütçesi: kategori kırılımı</h3>
       <div class="hint">Yıllık ikame bütçesi <b>${mM(K.scrap_butce)}</b>, filo büyümesiyle 2033'te <b>${mM(K.scrap_butce33)}</b>'a çıkıyor.
       En çok harcama yapan kategoriler aşağıda. BER kuralı bu akışın vanası.</div>
@@ -584,11 +570,10 @@ function renderOngoru(){
 
   <div class="grid g21">
     <div class="card"><h3>Geriye dönük test: yaz çeyreğini önceden tahmin edebilir miydik?</h3>
-      <div class="hint">Modeli geçmiş bir çeyrekle sınadık. Yılın ilk yarısıyla yaz çeyreğini tahmin ettirdik.
-      Toplam düzeyde mevsim katsayısı hatayı %${String(DATA.backtest.toplam_hata[2]).replace('.',',')}'ten
+      <div class="hint">İlk yarıyla yaz çeyreği tahmin edildi. Mevsim katsayısı toplam hatayı
+      %${String(DATA.backtest.toplam_hata[2]).replace('.',',')}'ten
       <b style="color:${C.teal}">%${String(DATA.backtest.toplam_hata[3]).replace('.',',')}'e</b> indiriyor.
-      Tek parça düzeyinde ise katsayı bir şey değiştirmiyor, çünkü talep kesikli olduğu için bir parçanın yaz zirvesi öngörülemez.
-      Buradan çıkan ders: parçada kesikli talep yöntemleri, bütçe ve kapasite planında mevsim düzeltmesi kullanılır.</div>
+      Katsayı bütçe düzeyinde çalışır, tek parçada kesikli talep yöntemleri geçerli.</div>
       <div style="height:205px"><canvas id="cBt"></canvas></div></div>
     <div class="callout" style="margin:0"><span class="tag">Doğrulama</span>
       <p>Üç bağımsız kontrol aynı yönde: float formülü sahayla %97 uyumlu, risk sıralamasının birincisi sahada da riskli,
@@ -610,43 +595,12 @@ function renderOngoru(){
       <div style="height:250px"><canvas id="cKat"></canvas></div></div>
   </div>
 
-  <div class="grid g21">
-    <div class="card"><h3>Emekli filo planlayıcısı: 4 klasik modele bağlı ${mM(K.phaseout)}</h3>
-      <div class="hint">Çubuklar her modele bağlı stok değerini, çizgi ise talebin 2033'e kadar değişimini gösteriyor.
-      Bugün doğru duran bu stok, yönetilmezse yarının atıl yığını olur.</div>
+  <div class="card"><h3>Emekli filo planlayıcısı: 4 klasik modele bağlı ${mM(K.phaseout)}</h3>
+      <div class="hint">Çubuklar modele bağlı stok değeri, çizgi 2033'e talep değişimi. Eritme takvimle değil sinyalle:
+      kalan talep eşiğin altına inince hızlanır, OEM gecikirse kendiliğinden yavaşlar. Canlı prova Senaryo sekmesinde.</div>
       <div style="height:235px"><canvas id="cPhase"></canvas></div></div>
-    <div class="callout amber" style="margin:0"><span class="tag">Eritme Takvimle Değil, Sinyalle</span>
-      <p>Erken eritirsen uçak yerde kalır, geç kalırsan sermaye çürür. Çözüm, kararı sinyale bağlamak.
-      Bir modelin kalan talebi eşiğin altına inince eritme hızlanır. Üretici üretimi bitirdiğini duyurunca
-      son alım kararı tetiklenir. Teslimatlar gecikip klasik filo geç emekli olursa bu tetikler kendiliğinden yavaşlar.
-      Takvime bağlı bir plan bu durumda çökerdi, sinyale bağlı plan kendini düzeltir. Senaryo sekmesindeki
-      "OEM teslimat gecikmesi" düğmesi bunun canlı provası.</p></div>
-  </div>
 
-  <h2 class="sec-h">Yapay zekâ tahmin motoru</h2>
-  <p class="sec-p">Model hibrit çalışıyor. İstatistiksel bir tahminin üzerine, yapay sinir ağının öğrendiği bir düzeltme biniyor.
-  Eğitim yılın ilk çeyrekleriyle yapıldı, test ise modele hiç gösterilmeyen son çeyrekle. <span class="note">train_demand_model.py</span></p>
   ${ml ? `
-  <div class="grid g3">
-    <div class="card"><h3>Eğitim eğrisi</h3><div style="height:230px"><canvas id="cLoss"></canvas></div></div>
-    <div class="card"><h3>Son çeyrek testi: ortalama hata</h3><div style="height:230px"><canvas id="cMae"></canvas></div></div>
-    <div class="card"><h3>Son çeyrek: gerçek ve tahmin</h3><div style="height:230px"><canvas id="cSca"></canvas></div></div>
-  </div>
-  <div class="grid g21">
-    <div class="callout" style="margin:0"><span class="tag">Dürüst Bulgu</span>
-      <p>${mlBulgu(ml)} Yalnızca dört çeyreklik veriyle ağ, klasik yöntemleri geçemiyor. Talep yaz çeyreğinde zirve yapıp
-      düştüğü için trendi ezberleyen her model yanılıyor. Mevsimi öğrenmek için sekiz çeyrekten fazla veri gerekir.
-      Modelin asıl avantajı, AMOS olay kayıtları bağlandığında ortaya çıkacak. Bu yüzden mimaride yeri hazır ama karar yetkisi yok.
-      İkinci fazda öneri modunda çalışır, doğruluk eşiği geçilmeden otomasyona alınmaz.</p></div>
-    <div class="card"><h3>Model künyesi</h3>
-      <div class="ladder" style="margin-top:8px">
-        <div class="step"><span class="no">λ</span><span class="nm">İstatistiksel taban, üzerine ağın öğrendiği düzeltme<small>ağ, tabanı en fazla 1,65 kat oynatabilir</small></span></div>
-        <div class="step"><span class="no">⚙</span><span class="nm">Sinir ağı 128-64-32, 54 özellik, 10.000 örnek<small>Poisson kaybı, dropout 0,15</small></span></div>
-        <div class="step"><span class="no">×3</span><span class="nm">Üç tohumlu topluluğun ortalaması<small>en iyi ağırlıklar geri yüklenir, sonuç her koşuda aynı</small></span></div>
-        <div class="step"><span class="no">!</span><span class="nm">Sınırlar: 4 çeyrek veri, sentetik set, karar yetkisi yok<small>ikinci fazda öneri modunda, eşik geçilmeden otomasyon yok</small></span></div>
-      </div></div>
-  </div>
-
   <div class="grid g21">
     <div class="card"><h3>Tahmin gezgini: model bu parça için ne dedi?</h3>
       <div class="ctl" style="margin-bottom:9px">
@@ -668,23 +622,14 @@ function renderOngoru(){
   <div class="callout amber"><span class="tag">Model çıktısı yok</span><p>model_results.json bulunamadı.
   <span class="mono">uv run train_demand_model.py</span> çalıştırın.</p></div>`}
 
-  <div class="grid g21">
-    <div class="card"><h3>Cold-start: geçmişi olmayan parçayı tahmin etmek</h3>
-      <div class="hint">Örnek olarak <b class="mono" style="color:${C.teal}">PN-${DATA.coldstart.pn}</b> parçasını alalım, ${DATA.coldstart.sub} kategorisinden.
-      Bu parçanın geçmişi yok, o yüzden ilk tahmini benzerlerinden alıyoruz. <b>${DATA.coldstart.grup_ad}</b> ailesindeki
-      ${fmt(DATA.coldstart.grup_n)} benzer parçanın ortalaması <b>${String(DATA.coldstart.prior).replace('.',',')} adet</b>.
-      Gerçek değer ise ${String(DATA.coldstart.gercek).replace('.',',')}, yani başlangıç tahmini sapıyor. Kaydırıcıyı oynatıp gözlem geldikçe tahminin nasıl düzeldiğini görün.</div>
+  <div class="card"><h3>Cold-start: geçmişi olmayan parçayı tahmin etmek</h3>
+      <div class="hint">Örnek: <b class="mono" style="color:${C.teal}">PN-${DATA.coldstart.pn}</b>, ${DATA.coldstart.sub}.
+      Başlangıç tahmini <b>${DATA.coldstart.grup_ad}</b> ailesindeki ${fmt(DATA.coldstart.grup_n)} benzerin ortalaması,
+      <b>${String(DATA.coldstart.prior).replace('.',',')} adet</b>. Gerçek değer ${String(DATA.coldstart.gercek).replace('.',',')}.
+      Kaydırıcıyla gözlem ekleyin, tahmin parçanın kendi değerine yakınsar.</div>
       <div class="sl" style="max-width:430px"><label>Gelen gözlem <b id="csLbl">0 çeyrek, yalnız başlangıç tahmini</b></label>
         <input type="range" id="csN" min="0" max="4" step="1" value="0"></div>
-      <div style="height:190px"><canvas id="cCold"></canvas></div>
-      <div class="hint" style="margin-top:7px">Yöntem basit: benzerlerinden başla, gözlem geldikçe düzelt. 2033 talebinin
-      yaklaşık %65'i geçmişi olmayan parçalarda olduğu için bu bir kenar durum değil, ana senaryo.</div></div>
-    <div class="callout amber" style="margin:0"><span class="tag">Yol Haritası: Rutin Dışı Bakım Entegrasyonu</span>
-      <p>Bir uçak plansız yere indiğinde, aynı zaman aralığındaki <strong>planlı söküm ve bakımlar öne çekilebilir</strong>.
-      Böylece parça talepleri tek bir pencerede toplanır ve uçak ikinci kez yere indirilmez. Catalyst bunu görebilir,
-      çünkü hem arıza talebini hem bakım planını aynı veri modelinde tutar. Kazanç doğrudan ana ölçüte yansır:
-      <strong>yerde bekleyen uçak oranı düşer</strong>. Bu, basılı case'te belirtilen bakım planı entegrasyon eksikliğinin de cevabı.</p></div>
-  </div>`;
+      <div style="height:190px"><canvas id="cCold"></canvas></div></div>`;
 
   const ceyD = DATA.ceyrek;
   new Chart($('cCey'), {data:{labels:ceyD.ad,datasets:[
@@ -717,24 +662,6 @@ function renderOngoru(){
       scales:{x:{ticks:{callback:v=>'+%'+v}},y:{ticks:{font:{size:9.5},autoSkip:false}}},
       plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` +%${f1(c.parsed.x)}`}}}}});
 
-  if(ml){
-    new Chart($('cLoss'), {type:'line',data:{labels:ml.history.epoch,datasets:[
-      {label:'Eğitim',data:ml.history.train,borderColor:C.blue,pointRadius:0,borderWidth:2},
-      {label:'Test (Q4)',data:ml.history.test,borderColor:C.amber,pointRadius:0,borderWidth:2}]},
-      options:{maintainAspectRatio:false,scales:{x:{title:{display:true,text:'epoch'},ticks:{maxTicksLimit:8}}}}});
-    const names = Object.keys(ml.metrics), maes = names.map(n => ml.metrics[n].mae);
-    const best = maes.indexOf(Math.min(...maes));
-    new Chart($('cMae'), {type:'bar',data:{labels:names.map(n=>n.replace(' (MLP-Poisson)','').replace(' (son çeyrek)','')),
-      datasets:[{label:'MAE',data:maes,borderRadius:4,
-        backgroundColor:names.map((n,i)=>i===best?C.teal:n.includes('öğrenme')?C.violet:'rgba(119,134,156,.6)')}]},
-      options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-    const mxs = Math.max(...ml.scatter.y, ...ml.scatter.p);
-    new Chart($('cSca'), {data:{datasets:[
-      {type:'scatter',label:'PN',data:ml.scatter.y.map((y,i)=>({x:y,y:ml.scatter.p[i]})),backgroundColor:'rgba(79,193,176,.45)',pointRadius:2.5},
-      {type:'line',label:'y = x',data:[{x:0,y:0},{x:mxs,y:mxs}],borderColor:C.dim,borderDash:[5,5],pointRadius:0,borderWidth:1}]},
-      options:{maintainAspectRatio:false,scales:{x:{title:{display:true,text:'gerçek'}},y:{title:{display:true,text:'tahmin'}}},
-        plugins:{legend:{display:false}}}});
-  }
 
   /* ---- ABC × XYZ matrisi ---- */
   const ax = DATA.abcxyz, pmax = Math.max(...ax.pay.flat(), 1);
@@ -871,14 +798,6 @@ function renderOngoru(){
     if(b.dataset.preset === 'scrapa' && W.ready){ W.reset(); W.flags.add(FL.SCRAPA); W.apply(); }
   });
 }
-function mlBulgu(ml){
-  const m = ml.metrics, names = Object.keys(m);
-  const dl = names.find(k=>k.includes('öğrenme'));
-  const klasik = names.filter(k=>k!==dl).reduce((a,b)=>m[a].mae<=m[b].mae?a:b);
-  const fark = Math.round(100*(m[dl].mae/m[klasik].mae-1));
-  return `Son çeyrek testinde sinir ağının ortalama hatası ${String(m[dl].mae).replace('.',',')}, en iyi klasik yöntemin
-    %${fark} gerisinde.`;
-}
 
 /* =====================================================================
    4 · HARİTA — etkileşimli Türkiye haritası (temsili dağıtım) + risk ısı haritası
@@ -901,288 +820,396 @@ const TR_KIYI = [
   [29.12,41.22],[28.60,41.40],[28.10,41.62],[27.97,41.86]];
 const TR_MARMARA = [[26.95,40.50],[27.60,40.37],[28.85,40.37],[29.30,40.63],[29.05,40.95],
                     [28.00,41.00],[27.45,40.92],[26.98,40.68]];
-const H = {mode:'tr', view:'svc', kr:'all', kat:'all', yil33:false, kriz:false, akis:false, sel:0};
+const H = {kr:'all', kat:'all', yil33:false, kriz:false, akis:false, rota:false, rsen:0, rpn:null, rk:null, wp:null, sel:0};
+
 function renderHarita(){
   const el = $('v-harita');
   const HA = DATA.harita;
-  const KATS = DATA.kat;
-  const VIEWS = {svc:'Kullanılabilir stok (adet)', talep25:'Talep 2025 (adet)', kirmizi:'Kırmızı PN',
-                 min33:'Önerilen MIN 2033 (adet)', dis_bagimli:'Dışa bağımlı talep (adet)'};
-  const KAT_OK = new Set(['svc', 'talep25', 'kirmizi']);
-  const GRUP = {}; HA.grup.kod.forEach((k, i) => GRUP[k] = {ad: HA.grup.ad[i], u25: HA.grup.u25[i], u33: HA.grup.u33[i]});
-  const IST_I = HA.kod.indexOf('IST');
-  H.sel = IST_I;
+  const GRUP = {}; HA.grup.kod.forEach((k, n) => GRUP[k] = {ad: HA.grup.ad[n], u25: HA.grup.u25[n], u33: HA.grup.u33[n]});
+  const DEPO_RENK = {ana_depo:'#E81932', ileri_depo:'#1A1D21', hat_stok:'#5A6472', yok:'#B6BDC7'};
+  const DEPO_AD = {ana_depo:'Ana depo', ileri_depo:'İleri depo', hat_stok:'Hat stoğu', yok:'Stok yok'};
+  const PRENK = ['#E81932', '#1A73E8', '#12805C', '#B8860B', '#7B1FA2'];
+  const N = HA.kod.length, IST_I = HA.kod.indexOf('IST');
+
+  /* ---- Web Mercator, istasyon sınırlarına oturtulur ---- */
+  const W = 1000, HG = 560, PAD = 34;
+  const mY = lat => Math.log(Math.tan(Math.PI/4 + lat*Math.PI/360));
+  const lo1 = Math.min(...HA.lon) - 4, lo2 = Math.max(...HA.lon) + 4;
+  const la1 = Math.min(...HA.lat) - 3, la2 = Math.max(...HA.lat) + 3;
+  const sk = Math.min((W - 2*PAD)/(lo2 - lo1), (HG - 2*PAD)/(mY(la2) - mY(la1)) * (Math.PI/180));
+  const cx = (lo1 + lo2)/2, cyM = (mY(la1) + mY(la2))/2;
+  const prj = (lon, lat) => [W/2 + (lon - cx)*sk, HG/2 - (mY(lat) - cyM)*sk*180/Math.PI];
+  const PXY = HA.kod.map((_, i) => prj(HA.lon[i], HA.lat[i]));
+
+  const zemin = (typeof DUNYA !== 'undefined' ? DUNYA : []).map(ring =>
+    'M' + ring.map(p => { const q = prj(p[0], p[1]); return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join('L') + 'Z'
+  ).join(' ');
 
   el.innerHTML = `
-  <h2 class="sec-h">İstasyon ağı: coğrafi kör noktayı görünür kılmak</h2>
-  <p class="sec-p">Basılı case'in 5 satırlık istasyon tablosunu THY ağının bilinen noktalarına dağıttık, toplam
-  <b>${HA.kod.filter((_, i) => !HA.yd[i]).length} yurt içi havalimanı ve ${HA.kod.filter((_, i) => HA.yd[i]).length} yurt dışı istasyon</b>.
-  Grup toplamları case tablosuyla birebir aynı. Havalimanı bazlı kırılım temsilîdir, bunu her balonda belirtiyoruz.
-  Haritayı sürükleyebilir, yakınlaştırabilir ve bir noktaya tıklayabilirsiniz.</p>
+  <h2 class="sec-h">İstasyon ağı</h2>
+  <p class="sec-p"><b>${HA.kod.filter((_, i) => !HA.yd[i]).length} yurt içi + ${HA.kod.filter((_, i) => HA.yd[i]).length} yurt dışı istasyon</b> ·
+  grup toplamları case tablosuyla birebir, istasyon kırılımı ve depo katmanı temsilî. Noktaya tıkla, rota katmanını dene.</p>
   <div class="card">
     <div class="ctl">
-      <span class="chip hm on" data-m="tr">🗺 Türkiye</span>
-      <span class="chip hm" data-m="gl">🌐 Küresel ağ (İstanbul merkezli)</span>
-      <span style="width:10px"></span>
-      ${Object.entries(VIEWS).map(([k, v], n) =>
-        `<span class="chip mv${n === 0 ? ' on' : ''}" data-v="${k}">${v.replace(/ \(.*/, '')}</span>`).join('')}
-    </div>
-    <div class="ctl" style="margin-top:-3px">
-      <select id="hKr"><option value="all">Tüm kritiklik</option>${HA.kritiklik.map((k, i) => `<option value="${i}">${k}</option>`).join('')}</select>
-      <select id="hKat"><option value="all">Tüm kategoriler</option>${KATS.ad.map((k, i) => `<option value="${i}">${k}</option>`).join('')}</select>
-      <span class="chip tg" data-t="yil33">2025 ↔ 2033</span>
       <span class="chip tg" data-t="kriz">Kriz katmanı</span>
+      <span class="chip tg" data-t="yil33">2033</span>
       <span class="chip tg" data-t="akis">Tamir akışı</span>
+      <span class="chip tg" data-t="rota">Parça rotası</span>
       <span class="note" style="margin-left:auto" id="hNot">temsilî dağıtım, istasyon verisi veride yok</span>
     </div>
-    <div class="grid g21" style="margin:0">
-      <div class="tmap" id="hMapWrap">
-        <svg id="hSvg" viewBox="0 0 1000 468" preserveAspectRatio="xMidYMid meet"></svg>
-        <div class="tzoom"><button id="hZin">+</button><button id="hZout">−</button><button id="hZfit" title="sığdır">⌂</button></div>
-        <div class="tbadge" id="hBadge">TEMSİLİ DAĞITIM · sadeleştirilmiş kontur</div>
+    <div style="margin-bottom:10px">
+      <div class="tmap buyuk" id="hMapWrap" style="background:#E9EDF2">
+        <svg id="hSvg" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid meet">
+          <rect x="0" y="0" width="1000" height="560" fill="#E9EDF2"></rect>
+          <g id="hPan">
+            <g id="hZemin" fill="#F7F6F2" stroke="#D6DBE1" stroke-width=".7"><path d="${zemin}"></path></g>
+            <g id="hAkisG"></g><g id="hRotaG"></g><g id="hNodes"></g>
+          </g>
+        </svg>
+        <div class="tzoom"><button id="hZin">+</button><button id="hZout">−</button><button id="hZtr" title="Türkiye">TR</button><button id="hZfit" title="tümü">⌂</button></div>
+        <div class="tbadge" id="hBadge">TEMSİLİ DAĞITIM · 110m dünya konturu</div>
         <div class="ttip" id="hTip"></div>
       </div>
-      <div>
-        <div class="card flush" style="padding:14px 16px;margin-bottom:11px" id="hDet"></div>
-        <div class="tw" style="max-height:236px"><table id="hTbl"><thead><tr>
-          <th>Havalimanı</th><th>Grup</th><th class="n">Uçak 25→33</th><th class="n" id="hValHead"></th>
-        </tr></thead><tbody></tbody></table></div>
-      </div>
     </div>
+    <div class="grid g2" style="margin-bottom:10px">
+      <div class="card flush" style="padding:14px 16px" id="hDet"></div>
+      <div class="tw" style="max-height:250px"><table id="hTbl"><thead><tr>
+        <th>Havalimanı</th><th>Depo</th><th class="n">Uçak 25→33</th><th class="n">Stok adet</th>
+      </tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="note" id="hLej" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center"></div>
+    <div id="hRota" style="display:none;border-top:1px solid var(--line-soft);margin-top:12px;padding-top:11px"></div>
   </div>
+`;
 
-  <div class="card" style="margin-top:14px">
-    <h3>Risk ısı haritası: kategori ve kritikliğe göre</h3>
-    <div class="hint">Hücre rengi ortalama riski gösterir, kırmızı hücreler izlemenin çekirdeğidir. Kategoriler ortalama riske göre sıralı.</div>
-    <div style="overflow:auto"><table class="heat" id="hHeat"></table></div>
-    <div class="lg"><span><i class="dot" style="background:${lerpColor(0)}"></i>düşük</span>
-      <span><i class="dot" style="background:${lerpColor(.5)}"></i>orta</span>
-      <span><i class="dot" style="background:${lerpColor(1)}"></i>yüksek risk</span></div>
-  </div>`;
+  const svg = $('hSvg'), wrap = $('hMapWrap'), tip = $('hTip');
+  const gPan = $('hPan'), gNodes = $('hNodes'), gAkis = $('hAkisG'), gRota = $('hRotaG');
 
-  /* ---- iki projeksiyon: Türkiye (coğrafi) + küresel (İstanbul merkezli azimut) ---- */
-  const PX = (lon, lat) => [(lon - 25.4) * 50.5, (42.6 - lat) * 65];
-  const path = pts => 'M' + pts.map(p => PX(p[0], p[1]).map(v => v.toFixed(1)).join(',')).join('L') + 'Z';
-  const GC = [500, 244], GR = 200, DMAX = Math.max(...HA.dist) * 1.05;
-  const GXY = i => { const rr = HA.dist[i] / DMAX * GR, b = HA.yon[i] * Math.PI / 180;
-    return [GC[0] + rr * Math.sin(b), GC[1] - rr * Math.cos(b)]; };
-  const pos = i => H.mode === 'tr' ? PX(HA.lon[i], HA.lat[i]) : GXY(i);
-  const visible = () => HA.kod.map((_, i) => i).filter(i => H.mode === 'tr' ? !HA.yd[i] : (HA.yd[i] || i === IST_I));
-
-  const svg = $('hSvg');
-  const ringler = [2000, 4000, 6000, 8000].map(km => { const rr = km / DMAX * GR;
-    return `<circle cx="${GC[0]}" cy="${GC[1]}" r="${rr.toFixed(0)}" fill="none" stroke="#26345070" stroke-width="1"/>
-      <text x="${GC[0] + 4}" y="${(GC[1] - rr - 4).toFixed(0)}" font-size="8.5" fill="#77869C"
-        font-family="'JetBrains Mono',monospace">${fmt(km)} km</text>`; }).join('');
-  svg.innerHTML = `
-    <defs><marker id="tArrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0,0.5 L7.5,4 L0,7.5 Z" fill="rgba(232,163,61,.75)"/></marker></defs>
-    <g id="hWorld">
-      <g id="hZeminTR">
-        <path class="tland" d="${path(TR_KIYI)}"/>
-        <path class="tsea" d="${path(TR_MARMARA)}"/>
-        <line class="tstrait" x1="${PX(29.05,40.98)[0]}" y1="${PX(29.05,40.98)[1]}" x2="${PX(29.12,41.21)[0]}" y2="${PX(29.12,41.21)[1]}" stroke-width="3.5"/>
-        <line class="tstrait" x1="${PX(26.25,40.03)[0]}" y1="${PX(26.25,40.03)[1]}" x2="${PX(26.93,40.51)[0]}" y2="${PX(26.93,40.51)[1]}" stroke-width="3.5"/>
-        <ellipse class="tsea" cx="${PX(42.95,38.62)[0]}" cy="${PX(42.95,38.62)[1]}" rx="${(.55*50.5).toFixed(1)}" ry="${(.30*65).toFixed(1)}"/>
-        <ellipse class="tsea" cx="${PX(33.35,38.75)[0]}" cy="${PX(33.35,38.75)[1]}" rx="${(.25*50.5).toFixed(1)}" ry="${(.42*65).toFixed(1)}"/>
-      </g>
-      <g id="hZeminGL" display="none">${ringler}
-        <text x="${GC[0]}" y="26" text-anchor="middle" font-size="10" fill="#77869C"
-          font-family="'JetBrains Mono',monospace">İSTANBUL MERKEZLİ AZİMUT GÖRÜNÜMÜ — halkalar büyük daire uzaklığı</text></g>
-      <g id="hFlows"></g><g id="hNodes"></g>
-    </g>`;
-  const world = svg.querySelector('#hWorld');
-  const zeminTR = svg.querySelector('#hZeminTR');
-  const zeminGL = svg.querySelector('#hZeminGL');
-  const flowsG = svg.querySelector('#hFlows');
-  const nodesG = svg.querySelector('#hNodes');
-
-  /* ---- kaydırma / yakınlaştırma ---- */
-  const Z = {k: 1, tx: 0, ty: 0};
-  function applyZoom(){
-    world.setAttribute('transform', `translate(${Z.tx},${Z.ty}) scale(${Z.k})`);
-    nodesG.querySelectorAll('.tnode').forEach(n => {
-      const [x, y] = n.dataset.p.split(',');
-      n.setAttribute('transform', `translate(${x},${y}) scale(${(1 / Z.k).toFixed(3)})`);
-    });
+  /* ---- yaklaştırma / kaydırma ---- */
+  const VT = {k: 1, tx: 0, ty: 0};
+  function vtUygula(){ gPan.setAttribute('transform', `translate(${VT.tx.toFixed(1)},${VT.ty.toFixed(1)}) scale(${VT.k.toFixed(3)})`); }
+  function zoomAt(f){
+    const nk = Math.max(1, Math.min(8, VT.k * f));
+    const cxp = W/2, cyp = HG/2;
+    VT.tx = cxp - (cxp - VT.tx) * (nk/VT.k); VT.ty = cyp - (cyp - VT.ty) * (nk/VT.k); VT.k = nk;
+    vtUygula();
   }
-  function zoomAt(f, cx, cy){
-    const k2 = Math.min(7, Math.max(1, Z.k * f)); f = k2 / Z.k;
-    Z.tx = cx - (cx - Z.tx) * f; Z.ty = cy - (cy - Z.ty) * f; Z.k = k2;
-    if(Z.k === 1){ Z.tx = 0; Z.ty = 0; }
-    applyZoom();
+  function zoomBox(lo_1, la_1, lo_2, la_2){
+    const [x1, y1] = prj(lo_1, la_2), [x2, y2] = prj(lo_2, la_1);
+    const k = Math.min(8, Math.min(W / (x2 - x1), HG / (y2 - y1)) * .92);
+    VT.k = k; VT.tx = W/2 - k * (x1 + x2)/2; VT.ty = HG/2 - k * (y1 + y2)/2;
+    vtUygula(); draw();
   }
-  const wrap = $('hMapWrap');
-  const svgXY = e => { const r = wrap.getBoundingClientRect();
-    return [(e.clientX - r.left) / r.width * 1000, (e.clientY - r.top) / r.height * 468]; };
-  wrap.addEventListener('wheel', e => { e.preventDefault();
-    const [cx, cy] = svgXY(e); zoomAt(e.deltaY < 0 ? 1.2 : 1/1.2, cx, cy); }, {passive: false});
+  $('hZin').addEventListener('click', () => { zoomAt(1.45); draw(); });
+  $('hZout').addEventListener('click', () => { zoomAt(1/1.45); draw(); });
+  $('hZfit').addEventListener('click', () => { VT.k = 1; VT.tx = 0; VT.ty = 0; vtUygula(); draw(); });
+  $('hZtr').addEventListener('click', () => zoomBox(24.5, 34.8, 45.5, 43.5));
+  H._parcaGoster = (pnIdx, hedefKod, tip) => {
+    H.rota = false; H.wp = {i: pnIdx, hedef: HA.kod.indexOf(hedefKod)};
+    H.rpn = 0; H.rk = null;
+    const ks = kanalVeri(wpSpec(pnIdx, hedefKod), H.wp.hedef);
+    const k = ks.findIndex(o => o.tip === tip);
+    if(k >= 0) H.rk = k;
+    const is_ = ks.map(o => o.i).concat([H.wp.hedef]);
+    zoomBox(Math.min(...is_.map(x => HA.lon[x])) - 3, Math.min(...is_.map(x => HA.lat[x])) - 2,
+            Math.max(...is_.map(x => HA.lon[x])) + 3, Math.max(...is_.map(x => HA.lat[x])) + 2);
+  };
   let drag = null;
-  wrap.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY, Z.tx, Z.ty]; });
-  document.addEventListener('pointermove', e => { if(!drag) return;
-    const r = wrap.getBoundingClientRect();
-    Z.tx = drag[2] + (e.clientX - drag[0]) / r.width * 1000;
-    Z.ty = drag[3] + (e.clientY - drag[1]) / r.height * 468; applyZoom(); });
-  document.addEventListener('pointerup', () => drag = null);
-  $('hZin').addEventListener('click', () => zoomAt(1.35, 500, 234));
-  $('hZout').addEventListener('click', () => zoomAt(1/1.35, 500, 234));
-  $('hZfit').addEventListener('click', () => { Z.k = 1; Z.tx = 0; Z.ty = 0; applyZoom(); });
-
-  /* ---- değer: görünüm × kritiklik × kategori × kriz × havalimanı payı ---- */
-  function krizFaktor(){
-    if(!H.kriz) return 1;
-    const r = senaryoHesap(SC);
-    return r.kir / Math.max(1, K.kirmizi);
-  }
-  const pay = i => H.view === 'min33' ? HA.pay33[i] : HA.pay25[i];
-  const krToplam = view => H.kr === 'all'
-    ? HA.krTot[view].reduce((a, b) => a + b, 0) : HA.krTot[view][+H.kr];
-  function val(i){
-    if(H.kat !== 'all'){
-      const ki = +H.kat;
-      const base = {svc: KATS.svc[ki], talep25: KATS.t25[ki], kirmizi: KATS.kirmizi[ki]}[H.view] || 0;
-      return base * HA.pay25[i] * (H.view === 'kirmizi' ? krizFaktor() : 1);
+  svg.addEventListener('pointerdown', e => { drag = {x: e.clientX, y: e.clientY, tx: VT.tx, ty: VT.ty}; });
+  svg.addEventListener('pointermove', e => {
+    if(drag){
+      const r = svg.getBoundingClientRect(), o = W / r.width;
+      VT.tx = drag.tx + (e.clientX - drag.x) * o; VT.ty = drag.ty + (e.clientY - drag.y) * o;
+      vtUygula(); return;
     }
-    return krToplam(H.view) * pay(i) * (H.view === 'kirmizi' ? krizFaktor() : 1);
+    const hit = e.target.closest && e.target.closest('.rkHit');
+    if(hit){
+      const r = wrap.getBoundingClientRect();
+      tip.style.display = 'block';
+      tip.style.left = Math.min(r.width - 250, e.clientX - r.left + 14) + 'px';
+      tip.style.top = Math.max(6, e.clientY - r.top - 10) + 'px';
+      tip.innerHTML = hit.dataset.tip;
+      return;
+    }
+    const n = e.target.closest && e.target.closest('.wn');
+    if(!n){ tip.style.display = 'none'; return; }
+    const r = wrap.getBoundingClientRect(), i = +n.dataset.s;
+    tip.style.display = 'block';
+    tip.style.left = Math.min(r.width - 250, e.clientX - r.left + 14) + 'px';
+    tip.style.top = Math.max(6, e.clientY - r.top - 10) + 'px';
+    tip.innerHTML = tipHtml(i);
+  });
+  svg.addEventListener('pointerup', () => drag = null);
+  svg.addEventListener('pointerleave', () => { drag = null; tip.style.display = 'none'; });
+
+  /* ---- yardımcılar ---- */
+  const ucak = i => H.yil33 ? HA.u33[i] : HA.u25[i];
+  function krizFaktor(){
+    if(!H.kriz || SC.preset === 'baz') return 1;
+    return senaryoHesap(SC).kir / 134;
   }
-  const topSum = view => HA.krTot[view].reduce((a, b) => a + b, 0);
+  const hav = (i, j) => {
+    const R = 6371, d2r = Math.PI/180;
+    const dla = (HA.lat[j]-HA.lat[i])*d2r, dlo = (HA.lon[j]-HA.lon[i])*d2r;
+    const a = Math.sin(dla/2)**2 + Math.cos(HA.lat[i]*d2r)*Math.cos(HA.lat[j]*d2r)*Math.sin(dlo/2)**2;
+    return R * 2 * Math.asin(Math.min(1, Math.sqrt(a)));
+  };
+  const HAZIR = {ana_depo:.5, ileri_depo:1, hat_stok:2, yok:3};
+  const eta = (src, dst) => Math.round((hav(src, dst)/800 + (HA.yd[src] ? 4 : 1) + HAZIR[HA.depo[src]]) * 2) / 2;
+  const etaPool = (src, dst) => Math.round((hav(src, dst)/800 + 4 + 8) * 2) / 2;   // uçuş + gümrük + pool işlemi
+  const HAVUZ_ORTAK = ['FRA', 'LHR', 'CDG', 'DXB', 'AMS', 'JFK', 'JED', 'BER', 'SIN'];
+  const wpSpec = (i, hedefKod) => ({
+    pn: String(PN.id[i]), sub: LK.sub[PN.sub[i]],
+    kay: ['IST', 'ESB', 'ADB'].filter(k => k !== hedefKod),
+    pool: [HAVUZ_ORTAK[PN.id[i] % 9], HAVUZ_ORTAK[(PN.id[i] + 4) % 9]].filter(k => k !== hedefKod),
+    alim: PN.tsat[i]});
+  const rotaVeri = () => {
+    if(H.wp){
+      /* Watchlist'ten gelen tek parça: hedef kullanıcı seçimi, kanallar gerçek parça verisi */
+      const spec = wpSpec(H.wp.i, HA.kod[H.wp.hedef]);
+      const hIdx = H.wp.hedef;
+      const ops = spec.kay.map(k => { const i = HA.kod.indexOf(k); return {i, kod: k, tip: 'depo', saat: eta(i, hIdx)}; })
+        .concat(spec.pool.map(k => { const i = HA.kod.indexOf(k); return {i, kod: k, tip: 'pool', saat: etaPool(i, hIdx)}; }))
+        .sort((a, b) => a.saat - b.saat);
+      const parcalar = [{n: 0, pn: spec.pn, sub: spec.sub, ops, alim: spec.alim, renk: PRENK[0]}];
+      return {sc: {ucak: 'PN-' + spec.pn, hedef: HA.kod[hIdx], parcalar: [spec]}, hIdx, parcalar, kritik: ops[0].saat, wp: true};
+    }
+    const sc = HA.rota[H.rsen], hIdx = HA.kod.indexOf(sc.hedef);
+    const parcalar = sc.parcalar.map((p, n) => {
+      const ops = p.kay.map(k => { const i = HA.kod.indexOf(k); return {i, kod: k, tip: 'depo', saat: eta(i, hIdx)}; })
+        .concat((p.pool || []).map(k => { const i = HA.kod.indexOf(k); return {i, kod: k, tip: 'pool', saat: etaPool(i, hIdx)}; }))
+        .sort((a, b) => a.saat - b.saat);
+      return {n, pn: p.pn, sub: p.sub, ops, alim: p.alim, renk: PRENK[n % PRENK.length]};
+    });
+    return {sc, hIdx, parcalar, kritik: Math.max(...parcalar.map(p => p.ops[0].saat))};
+  };
+  /* Tek parça izole edilince: aksiyon merdivenindeki TÜM kanallar haritada.
+     Tamir ve satın alma süreleri parçanın GERÇEK verisinden (tic/tdis/tsat). */
+  const DIS_HUB = ['FRA', 'LHR', 'AMS', 'CDG', 'DXB'];
+  const KANAL_RENK = {depo:'#12805C', pool:'#1A73E8', sokum:'#E06A6A', ictamir:'#4FC1B0', distamir:'#9AA8C0', hizli:'#E8A54C', alim:'#77869C'};
+  const kanalVeri = (p, hIdx) => {
+    const idx = PIDX[p.pn];
+    const ks = [];
+    p.kay.forEach(k => { const i = HA.kod.indexOf(k);
+      ks.push({tip:'depo', ad:'Depo transferi', kod:k, i, saat: eta(i, hIdx), mal:null, malTxt:'iç transfer', dash:''}); });
+    (p.pool || []).forEach(k => { const i = HA.kod.indexOf(k);
+      ks.push({tip:'pool', ad:'Havuzdan değişim', kod:k, i, saat: etaPool(i, hIdx),
+               mal: idx != null ? .10 * PN.clp[idx] : null, dash:'1.6,4.6'}); });
+    if(idx != null){
+      if(PN.gay[idx] > 0)
+        ks.push({tip:'sokum', ad:'Donörden söküm', kod:'IST', i:IST_I, saat:24, mal:null, malTxt:'tamir borcu', dash:'7,3,2,3'});
+      if(PN.ato[idx] && PN.tic[idx] != null)
+        ks.push({tip:'ictamir', ad:'İç atölye tamiri', kod:'IST', i:IST_I, saat:PN.tic[idx]*24, mal:PN.icrep[idx], dash:'6,4'});
+      const dh = DIS_HUB.filter(k => k !== HA.kod[hIdx])[(+p.pn) % 4];
+      const di = HA.kod.indexOf(dh);
+      ks.push({tip:'distamir', ad:'Dış tamir', kod:dh, i:di, saat:PN.tdis[idx]*24, mal:PN.disrep[idx], dash:'10,5'});
+      ks.push({tip:'hizli', ad:'Hızlandırılmış dış tamir', kod:dh, i:di, saat:Math.ceil(PN.tdis[idx]*.6)*24, mal:PN.disrep[idx]*1.5, dash:'10,5'});
+      ks.push({tip:'alim', ad:'Yeni satın alma', kod:'OEM · FRA', i:HA.kod.indexOf('FRA'), saat:PN.tsat[idx]*24, mal:PN.clp[idx], dash:'2,6'});
+    }
+    return ks.sort((a, b) => a.saat - b.saat);
+  };
+  const sureTxt = s => s < 48 ? String(s).replace('.', ',') + ' saat' : fmt(Math.round(s/24)) + ' gün';
+  const yay = (a, b, k) => {
+    const [x1, y1] = PXY[a], [x2, y2] = PXY[b];
+    const mx = (x1+x2)/2 - (y2-y1)*k, my = (y1+y2)/2 + (x2-x1)*k;
+    return `M${x1.toFixed(1)},${y1.toFixed(1)} Q${mx.toFixed(1)},${my.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}`;
+  };
+
+  function tipHtml(i){
+    const kf = krizFaktor();
+    return `<b>${HA.kod[i]} · ${HA.ad[i]}</b><br>
+      Uçak ${ucak(i)} (${H.yil33 ? 2033 : 2025}) · ${DEPO_AD[HA.depo[i]]}<br>
+      Stok: <span class="tt-v">${fmt(HA.kalem[i])}</span> kalem · <span class="tt-v">${fmt(HA.adet[i])}</span> adet<br>
+      IST transfer: <span class="tt-v">${HA.tsaat[i] === 0 ? 'ana üs' : String(HA.tsaat[i]).replace('.', ',') + ' saat'}</span> ·
+      AOG kapsam ${pct(HA.kapsam[i]*100, 0)}${H.kriz && kf > 1 ? `<br><span style="color:#E06A6A">kriz: kırmızı yükü ×${f1(kf)}</span>` : ''}<br>
+      <i style="color:#77869C">temsilî dağıtım</i>`;
+  }
 
   /* ---- çizim ---- */
-  const tip = $('hTip');
-  function tipHtml(i){
-    return `<b>${HA.kod[i]} · ${HA.ad[i]}</b><br>
-      ${GRUP[HA.grp[i]].ad} grubu · uçak ${HA.u25[i]} → ${HA.u33[i]} (+${pct(HA.buyume[i], 0)})<br>
-      Kullanılabilir stok: <span class="tt-v">${fmt(topSum('svc') * HA.pay25[i])}</span> adet<br>
-      Kırmızı PN${H.kriz ? ' (senaryo)' : ''}: <span class="tt-v">${f1(topSum('kirmizi') * HA.pay25[i] * krizFaktor())}</span> ·
-      Talep: <span class="tt-v">${fmt(topSum('talep25') * HA.pay25[i])}</span>/yıl<br>
-      ${HA.yd[i] ? `İstanbul'a ${fmt(HA.dist[i])} km · ` : ''}<i style="color:#77869C">temsilî, uçak payıyla orantılı</i>`;
-  }
   function draw(){
-    document.querySelectorAll('#v-harita .hm').forEach(ch => ch.classList.toggle('on', ch.dataset.m === H.mode));
-    document.querySelectorAll('#v-harita .mv').forEach(ch => {
-      ch.classList.toggle('on', ch.dataset.v === H.view);
-      ch.classList.toggle('dis', H.kat !== 'all' && !KAT_OK.has(ch.dataset.v));
-    });
-    document.querySelectorAll('#v-harita .tg').forEach(ch => ch.classList.toggle('on', H[ch.dataset.t]));
-    $('hKr').disabled = H.kat !== 'all';
-    $('hValHead').textContent = VIEWS[H.view];
-    zeminTR.setAttribute('display', H.mode === 'tr' ? 'inline' : 'none');
-    zeminGL.setAttribute('display', H.mode === 'gl' ? 'inline' : 'none');
-    $('hBadge').textContent = H.mode === 'tr'
-      ? 'TEMSİLİ DAĞITIM · sadeleştirilmiş kontur' : 'TEMSİLİ DAĞITIM · azimut ağ görünümü';
-    $('hNot').textContent = H.kriz
-      ? (SC.preset === 'baz' ? 'kriz katmanı: normal durum, Senaryo sekmesinden bir kriz seçebilirsiniz'
-                             : `kriz katmanı: ${PRESETS[SC.preset] ? PRESETS[SC.preset].ad : 'özel senaryo'}, ${f1(krizFaktor())} kat`)
-      : "temsilî dağıtım, istasyon verisi veride yok";
+    document.querySelectorAll('#v-harita .tg').forEach(ch => ch.classList.toggle('on', !!H[ch.dataset.t]));
+    const kf = krizFaktor();
+    $('hNot').textContent = (H.rota || H.wp)
+      ? (() => { const r = rotaVeri(); return r.wp
+          ? `rota: ${r.sc.ucak} → ${r.sc.hedef} · Watchlist'ten · en hızlı ${sureTxt(r.kritik)}`
+          : `rota: ${r.sc.ucak} · ${r.sc.hedef} · 5 parça · kritik yol ${String(r.kritik).replace('.', ',')} saat`; })()
+      : H.kriz
+        ? (SC.preset === 'baz' ? 'kriz katmanı: normal durum, Senaryo sekmesinden bir kriz seçebilirsiniz'
+                               : `kriz katmanı: ${PRESETS[SC.preset] ? PRESETS[SC.preset].ad : 'özel senaryo'}, kırmızı ×${f1(kf)}`)
+        : 'temsilî dağıtım, istasyon verisi veride yok';
 
-    const vis = visible();
-    if(!vis.includes(H.sel)) H.sel = H.mode === 'tr' ? IST_I : vis[0];
-    const vals = {}, vmax = Math.max(...vis.map(i => { vals[i] = val(i); return vals[i]; }), 1e-6);
-    const sMax = Math.max(...vis.map(i => H.yil33 ? HA.u33[i] : HA.u25[i]));
-
-    nodesG.innerHTML = vis.map(i => {
-      const [x, y] = pos(i);
-      const rr = 7.5 + 19 * Math.sqrt(vals[i] / vmax);
-      const cls = (H.kriz ? 'kriz' : HA.buyume[i] >= 70 ? 'hot' : '');
-      return `<g class="tnode ${cls}${H.sel === i ? ' sel' : ''}" data-s="${i}" data-p="${x.toFixed(1)},${y.toFixed(1)}"
-        transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
-        <circle r="${(rr + 7).toFixed(1)}" fill="transparent"></circle>
-        <circle class="c" r="${rr.toFixed(1)}"></circle>
-        ${H.yil33 ? `<circle class="ring" r="${(rr * Math.sqrt(HA.u25[i] / Math.max(1, HA.u33[i]))).toFixed(1)}"></circle>` : ''}
-        <text y="${rr >= 12 ? -1.5 : 3}" font-size="${rr >= 12 ? 9.5 : 8}">${HA.kod[i]}</text>
-        ${rr >= 12 ? `<text class="v" y="10" font-size="8">${fmt(vals[i])}</text>` : ''}
-        ${H.yil33 ? `<text class="v" y="${(rr + 11).toFixed(0)}" font-size="8" fill="#E8A33D">+${pct(HA.buyume[i], 0)}</text>` : ''}
+    const uMax = Math.max(...HA.kod.map((_, i) => ucak(i)));
+    const sira = HA.kod.map((_, i) => i).sort((a, b) => ucak(b) - ucak(a));
+    const zk = VT.k;                                     // maplibre gibi: işaretler zoom'la büyümez
+    gNodes.innerHTML = sira.map(i => {
+      const [x, y] = PXY[i];
+      const rr = (5 + 13 * Math.sqrt(ucak(i) / uMax)) / zk;
+      const etiket = HA.yd[i] || rr * zk >= 7.5 || zk >= 2.2;
+      return `<g class="wn${H.sel === i ? ' sel' : ''}" data-s="${i}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+        <circle r="${(rr + 6/zk).toFixed(2)}" fill="transparent"></circle>
+        ${H.kriz && kf > 1 ? `<circle r="${(rr + 4/zk).toFixed(2)}" fill="none" stroke="#E81932" stroke-width="${(1.6/zk).toFixed(2)}" stroke-dasharray="4,3" opacity="${Math.min(.9, .25 + HA.pay25[i]*3).toFixed(2)}"></circle>` : ''}
+        <circle class="wc" r="${rr.toFixed(2)}" fill="${DEPO_RENK[HA.depo[i]]}" style="stroke-width:${(2/zk).toFixed(2)}"></circle>
+        ${etiket ? `<text class="wl" x="${(rr + 4/zk).toFixed(2)}" y="${(3.5/zk).toFixed(2)}" style="font-size:${(9.5/zk).toFixed(2)}px;stroke-width:${(2.6/zk).toFixed(2)}px">${HA.kod[i]}</text>` : ''}
       </g>`;
     }).join('');
-    applyZoom();
 
-    if(!H.akis){ flowsG.innerHTML = ''; }
-    else if(H.mode === 'tr'){
-      const [xi, yi] = pos(IST_I);
-      const wMax = Math.max(...vis.filter(i => i !== IST_I).map(i => HA.pay25[i]));
-      flowsG.innerHTML = vis.filter(i => i !== IST_I).map(i => {
-        const [x1, y1] = pos(i);
-        const w = 1 + 4.5 * (HA.pay25[i] / wMax);
-        const mx = (x1 + xi) / 2, my = Math.min(y1, yi) - 34;
-        return `<path class="tflow" stroke-width="${w.toFixed(1)}" d="M${x1.toFixed(0)},${y1.toFixed(0)} Q${mx.toFixed(0)},${my.toFixed(0)} ${xi.toFixed(0)},${yi.toFixed(0)}"/>`;
-      }).join('') + `<text x="500" y="452" text-anchor="middle" font-size="9" fill="#77869C"
-        font-family="'JetBrains Mono',monospace">istasyonlar → İstanbul iç tamir atölyeleri (döngüde ${fmt(HA.ic_tamir_toplam)} adet) — temsili akış</text>`;
-    } else {
-      const hublar = vis.filter(i => i !== IST_I);
-      const wMax = Math.max(...hublar.map(i => HA.pay25[i]));
-      flowsG.innerHTML = hublar.map(i => {
-        const [x2, y2] = pos(i);
-        const w = 1 + 4.5 * (HA.pay25[i] / wMax);
-        const mx = (GC[0] + x2) / 2 + (y2 - GC[1]) * .12, my = (GC[1] + y2) / 2 - (x2 - GC[0]) * .12;
-        return `<path class="tflow dis" stroke-width="${w.toFixed(1)}" d="M${GC[0]},${GC[1]} Q${mx.toFixed(0)},${my.toFixed(0)} ${x2.toFixed(0)},${y2.toFixed(0)}"/>`;
-      }).join('') + `<text x="500" y="452" text-anchor="middle" font-size="9" fill="#77869C"
-        font-family="'JetBrains Mono',monospace">İstanbul → dış tamir istasyonları (döngüde ${fmt(HA.dis_tamir_toplam)} adet) — temsili akış</text>`;
+    gAkis.innerHTML = !H.akis ? '' :
+      HA.kod.map((_, i) => i).filter(i => i !== IST_I && !HA.yd[i] && HA.depo[i] !== 'yok')
+        .map(i => `<path class="wf" d="${yay(i, IST_I, .12)}" stroke-width="${((1 + 4 * HA.pay25[i] / .3) / VT.k).toFixed(2)}"/>`).join('') +
+      HA.kod.map((_, i) => i).filter(i => HA.yd[i])
+        .map(i => `<path class="wf dis" d="${yay(IST_I, i, .10)}" stroke-width="1.4"/>`).join('');
+
+    if(!H.rota && !H.wp){ gRota.innerHTML = ''; $('hRota').style.display = 'none'; }
+    else {
+      const r = rotaVeri();
+      const [hx, hy] = PXY[r.hIdx];
+      const hedefIsaret = `
+        <g transform="translate(${hx.toFixed(1)},${hy.toFixed(1)})">
+          <circle r="${(14/zk).toFixed(1)}" fill="none" stroke="#1A1D21" stroke-width="${(1.4/zk).toFixed(2)}" stroke-dasharray="3,3"></circle>
+          <text y="${(6/zk).toFixed(1)}" text-anchor="middle" style="font-size:${(15/zk).toFixed(1)}px">✈</text>
+          <text class="wl" y="${(26/zk).toFixed(1)}" text-anchor="middle" style="font-weight:700;font-size:${(9.5/zk).toFixed(2)}px;stroke-width:${(2.6/zk).toFixed(2)}px">${r.sc.ucak} · ${r.sc.hedef}</text>
+        </g>`;
+      if(H.rpn != null){
+        /* kanal yelpazesi: seçili parçanın tüm geliş yolları — çizgiler tıklanır, üzerine gelince özet */
+        const ks = kanalVeri(r.sc.parcalar[H.rpn], r.hIdx);
+        gRota.innerHTML = ks.map((o, ki) => {
+          const d = yay(o.i, r.hIdx, .10 + ki * .055);
+          const secili = H.rk === ki, soluk = H.rk != null && !secili;
+          const tipMetni = `<b>${o.ad}</b><br>${o.kod} → ${r.sc.hedef} · ${sureTxt(o.saat)} · ${o.mal == null ? (o.malTxt || '—') : mUsd(o.mal)}`;
+          return `<path d="${d}" fill="none" stroke="${KANAL_RENK[o.tip]}"
+              stroke-width="${((secili ? 3.6 : ki === 0 && H.rk == null ? 3 : 1.8) / zk).toFixed(2)}"
+              ${o.dash ? `stroke-dasharray="${o.dash}"` : ''} opacity="${soluk ? .13 : secili ? .98 : ki === 0 ? .95 : .6}"/>
+            <path class="rkHit" data-k="${ki}" data-tip="${tipMetni}" d="${d}" fill="none"
+              stroke="rgba(0,0,0,0)" stroke-width="${(12/zk).toFixed(1)}" style="pointer-events:stroke;cursor:pointer"/>`;
+        }).join('') +
+          ks.map(o => `<circle cx="${PXY[o.i][0].toFixed(1)}" cy="${PXY[o.i][1].toFixed(1)}" r="${(3.6/zk).toFixed(1)}"
+            fill="${KANAL_RENK[o.tip]}" opacity=".92"/>`).join('') + hedefIsaret;
+      } else {
+        gRota.innerHTML = r.parcalar.map(p =>
+          p.ops.map((o, oi) => `<path d="${yay(o.i, r.hIdx, .16 + p.n * .045)}" fill="none"
+            stroke="${p.renk}" stroke-width="${((oi === 0 ? 2.8 : 1.5) / zk).toFixed(2)}"
+            ${oi === 0 ? '' : o.tip === 'pool' ? `stroke-dasharray="${(1.6/zk).toFixed(1)},${(4.6/zk).toFixed(1)}" stroke-linecap="round"` : `stroke-dasharray="${(5/zk).toFixed(1)},${(4/zk).toFixed(1)}"`}
+            opacity="${oi === 0 ? .92 : .42}"/>
+          <path class="rkHit" data-p="${p.n}" data-tip="<b>PN-${p.pn}</b> · ${o.tip === 'pool' ? 'pool' : 'depo'}<br>${o.kod} → ${r.sc.hedef} · ${String(o.saat).replace('.', ',')} saat · tıkla: tüm kanallar"
+            d="${yay(o.i, r.hIdx, .16 + p.n * .045)}" fill="none" stroke="rgba(0,0,0,0)"
+            stroke-width="${(11/zk).toFixed(1)}" style="pointer-events:stroke;cursor:pointer"/>`).join('') +
+          p.ops.map(o => o.tip === 'pool'
+            ? `<rect x="${(PXY[o.i][0] - 2.7/zk).toFixed(1)}" y="${(PXY[o.i][1] - 2.7/zk).toFixed(1)}" width="${(5.4/zk).toFixed(1)}" height="${(5.4/zk).toFixed(1)}"
+                fill="${p.renk}" opacity=".9" transform="rotate(45 ${PXY[o.i][0].toFixed(1)} ${PXY[o.i][1].toFixed(1)})"/>`
+            : `<circle cx="${PXY[o.i][0].toFixed(1)}" cy="${PXY[o.i][1].toFixed(1)}" r="${(3.4/zk).toFixed(1)}" fill="${p.renk}" opacity=".9"/>`).join('')
+        ).join('') + hedefIsaret;
+      }
+      rotaPanel(r);
+      $('hRota').style.display = 'block';
     }
 
-    const s = H.sel, g = GRUP[HA.grp[s]];
-    $('hDet').innerHTML = `
-      <h3 style="font-size:.9rem"><b class="mono" style="color:${C.teal}">${HA.kod[s]}</b> · ${HA.ad[s]}</h3>
-      <div class="hint" style="margin:7px 0 0">
-      Uçak ${HA.u25[s]} → ${HA.u33[s]}, <b style="color:${HA.buyume[s] >= 70 ? C.amber : C.teal}">+${pct(HA.buyume[s], 0)}</b>.
-      Kullanılabilir stok ${fmt(topSum('svc') * HA.pay25[s])} adet,
-      kırmızı ${f1(topSum('kirmizi') * HA.pay25[s] * krizFaktor())} parça${H.kriz ? ' (senaryo)' : ''},
-      yıllık talep ${fmt(topSum('talep25') * HA.pay25[s])}, önerilen 2033 MIN değeri ${fmt(topSum('min33') * HA.pay33[s])} adet.<br>
-      <i>Case tablosunda "${g.ad}" grubu ${g.u25}→${g.u33} uçak. Bu nokta grubun
-      ${pct(100 * HA.u25[s] / g.u25, 0)} payıyla temsil ediliyor. Gerçek üründe bu sayılar istasyon etiketli kayıtlardan gelir.</i></div>`;
+    lejant();
+    detay(H.sel, kf);
+    tablo();
+    vtUygula();
+  }
 
-    $('hTbl').querySelector('tbody').innerHTML = vis.map(i => `
+  function lejant(){
+    $('hLej').innerHTML = Object.keys(DEPO_RENK).map(t =>
+      `<span style="display:inline-flex;align-items:center;gap:6px">
+        <span style="width:11px;height:11px;border-radius:50%;background:${DEPO_RENK[t]};border:1.5px solid #fff;display:inline-block"></span>${DEPO_AD[t]}</span>`
+    ).join('') + `<span style="margin-left:auto">daire alanı ${H.yil33 ? 2033 : 2025} uçak sayısıyla orantılı · ${HA.kod.length} istasyon · temsilî</span>`;
+  }
+
+  function rotaPanel(r){
+    const cips = r.wp ? `
+      <div class="ctl" style="margin-bottom:8px">
+        <span class="chip on">PN-${r.sc.parcalar[0].pn} → ${r.sc.hedef} · Watchlist'ten</span>
+        <span class="chip" data-wkapat="1">✕ kapat</span>
+      </div>` : `
+      <div class="ctl" style="margin-bottom:8px">
+        ${HA.rota.map((s, n) => `<span class="chip rsc${n === H.rsen ? ' on' : ''}" data-rs="${n}">${s.ucak} · ${s.hedef}</span>`).join('')}
+        <span class="chip rpc${H.rpn == null ? ' on' : ''}" data-rp="-1">Tüm parçalar</span>
+        ${r.parcalar.map(p => `<span class="chip rpc${H.rpn === p.n ? ' on' : ''}" data-rp="${p.n}">
+          <span style="width:9px;height:9px;border-radius:50%;background:${p.renk};display:inline-block;margin-right:5px"></span>PN-${p.pn}</span>`).join('')}
+      </div>`;
+    if(H.rpn != null){
+      const p = r.parcalar[H.rpn];
+      const ks = kanalVeri(r.sc.parcalar[H.rpn], r.hIdx);
+      $('hRota').innerHTML = cips + `
+        <div class="hint" style="margin:0 0 7px"><b style="color:${p.renk}">PN-${p.pn}</b> ${p.sub} —
+          ${r.sc.hedef} istasyonuna tüm geliş kanalları, süreye göre:</div>
+        <div class="tw" style="max-height:225px"><table><thead><tr>
+          <th>Kanal</th><th>Kaynak</th><th class="n">Süre</th><th class="n">Maliyet</th></tr></thead><tbody>
+          ${ks.map((o, oi) => `<tr data-rk="${oi}" class="${H.rk === oi ? 'rkOn' : ''}" style="cursor:pointer">
+            <td><span class="sdot" style="background:${KANAL_RENK[o.tip]}"></span> ${o.ad}
+              ${oi === 0 ? ' <span class="bg bg-teal">önerilen</span>' : ''}</td>
+            <td class="mono">${o.kod}</td>
+            <td class="n">${sureTxt(o.saat)}</td>
+            <td class="n">${o.mal == null ? (o.malTxt || '—') : mUsd(o.mal)}</td></tr>`).join('')}
+        </tbody></table></div>
+        <div class="hint" style="margin:7px 0 0">Satıra ya da haritadaki çizgiye tıklayınca kanal vurgulanır, üzerine gelince özet görünür.
+        Tamir ve satın alma süreleri parçanın gerçek tedarik verisi. Temsilîdir.</div>`;
+      return;
+    }
+    $('hRota').innerHTML = cips + `
+      <div class="hint" style="margin:0">
+        ${r.parcalar.map(p => {
+          const alt = p.ops.slice(1).map(o => `${o.kod} ${o.tip === 'pool' ? 'pool ' : ''}${String(o.saat).replace('.', ',')}s`).join(' · ');
+          return `<b style="color:${p.renk}">PN-${p.pn}</b> ${p.sub} → önerilen <b>${p.ops[0].kod}</b>
+            ${p.ops[0].tip === 'pool' ? 'pool' : 'depo'} <b class="mono">${String(p.ops[0].saat).replace('.', ',')} saat</b>${alt ? ' · alternatif: ' + alt : ''}
+            · satın alma <b class="mono">${fmt(p.alim)} gün</b></div><div class="hint" style="margin:0">`;
+        }).join('')}
+        <b style="color:${C.text}">Kritik yol: ${String(r.kritik).replace('.', ',')} saat.</b>
+        Uçak, en geç parça ulaşınca toparlanır. Bir parçaya tıklayınca o parçanın BÜTÜN geliş kanalları haritada açılır:
+        depo, pool, donörden söküm, iç ve dış tamir, hızlandırılmış tamir, satın alma. Temsilîdir.</div>`;
+  }
+
+  function detay(s, kf){
+    const g = GRUP[HA.grp[s]];
+    $('hDet').innerHTML = `
+      <h3 style="font-size:.9rem"><b class="mono" style="color:${C.teal}">${HA.kod[s]}</b> · ${HA.ad[s]}
+        <span style="float:right;width:11px;height:11px;border-radius:50%;background:${DEPO_RENK[HA.depo[s]]};border:1.5px solid #fff;margin-top:3px"></span></h3>
+      <div class="hint" style="margin:7px 0 0">
+      ${DEPO_AD[HA.depo[s]]} · uçak ${HA.u25[s]} → ${HA.u33[s]}, <b style="color:${HA.buyume[s] >= 70 ? C.amber : C.teal}">+${pct(HA.buyume[s], 0)}</b>.<br>
+      Stok ${fmt(HA.kalem[s])} kalem · ${fmt(HA.adet[s])} adet · IST transfer ${HA.tsaat[s] === 0 ? 'ana üs' : String(HA.tsaat[s]).replace('.', ',') + ' saat'} ·
+      AOG kapsam ${pct(HA.kapsam[s]*100, 0)}${H.kriz && kf > 1 ? ` · <span style="color:#E06A6A">kriz ×${f1(kf)}</span>` : ''}.<br>
+      <i>Case tablosunda "${g.ad}" grubu ${g.u25}→${g.u33} uçak. Bu nokta grubun ${pct(100 * HA.u25[s] / g.u25, 0)} payıyla temsil edilir.
+      Gerçek üründe istasyon etiketli kayıttan gelir.</i></div>`;
+  }
+
+  function tablo(){
+    $('hTbl').querySelector('tbody').innerHTML = HA.kod.map((_, i) => i).sort((a, b) => ucak(b) - ucak(a)).map(i => `
       <tr data-s="${i}" style="cursor:pointer"><td><b class="mono" style="color:${C.teal}">${HA.kod[i]}</b>
         <span style="color:${C.dim}">${HA.ad[i]}</span></td>
-      <td><span class="bg ${HA.yd[i] ? 'bg-nk' : 'bg-teal'}">${HA.grp[i]}</span></td>
+      <td><span style="width:9px;height:9px;border-radius:50%;background:${DEPO_RENK[HA.depo[i]]};border:1px solid #fff;display:inline-block;margin-right:6px"></span>${DEPO_AD[HA.depo[i]]}</td>
       <td class="n">${HA.u25[i]} → ${HA.u33[i]} <span style="color:${HA.buyume[i] >= 70 ? C.amber : C.dim}">+${pct(HA.buyume[i], 0)}</span></td>
-      <td class="n">${H.view === 'kirmizi' ? f1(vals[i]) : fmt(vals[i])}</td></tr>`).join('');
+      <td class="n">${fmt(HA.adet[i])}</td></tr>`).join('');
   }
 
   /* ---- etkileşim ---- */
   el.addEventListener('click', e => {
-    const hm = e.target.closest('.hm');
-    if(hm){ H.mode = hm.dataset.m; draw(); return; }
-    const mv = e.target.closest('.mv');
-    if(mv && !mv.classList.contains('dis')){ H.view = mv.dataset.v; draw(); return; }
     const tg = e.target.closest('.tg');
     if(tg){ H[tg.dataset.t] = !H[tg.dataset.t]; draw(); return; }
+    const rs = e.target.closest('.rsc');
+    if(rs){ H.rsen = +rs.dataset.rs; H.rpn = null; H.rk = null; draw(); return; }
+    const rp = e.target.closest('.rpc');
+    if(rp){ const v = +rp.dataset.rp; H.rpn = v < 0 ? null : v; H.rk = null; draw(); return; }
+    const rr = e.target.closest('tr[data-rk]');
+    if(rr){ const k = +rr.dataset.rk; H.rk = H.rk === k ? null : k; draw(); return; }
     const tr = e.target.closest('tr[data-s]');
     if(tr){ H.sel = +tr.dataset.s; draw(); }
   });
+  el.addEventListener('click', e => {
+    const wk = e.target.closest('[data-wkapat]');
+    if(wk){ H.wp = null; H.rpn = null; H.rk = null; draw(); }
+  });
   svg.addEventListener('click', e => {
-    const n = e.target.closest('.tnode');
+    const hit = e.target.closest('.rkHit');
+    if(hit){
+      if(hit.dataset.k != null){ const k = +hit.dataset.k; H.rk = H.rk === k ? null : k; }
+      else if(hit.dataset.p != null){ H.rpn = +hit.dataset.p; H.rk = null; }
+      draw(); return;
+    }
+    const n = e.target.closest('.wn');
     if(n){ H.sel = +n.dataset.s; draw(); }
   });
-  svg.addEventListener('pointermove', e => {
-    const n = e.target.closest('.tnode');
-    if(!n){ tip.style.display = 'none'; return; }
-    const r = wrap.getBoundingClientRect();
-    tip.style.display = 'block';
-    tip.style.left = Math.min(r.width - 260, e.clientX - r.left + 14) + 'px';
-    tip.style.top = Math.max(6, e.clientY - r.top - 10) + 'px';
-    tip.innerHTML = tipHtml(+n.dataset.s);
-  });
-  svg.addEventListener('pointerleave', () => tip.style.display = 'none');
-  $('hKr').addEventListener('change', e => { H.kr = e.target.value; draw(); });
-  $('hKat').addEventListener('change', e => {
-    H.kat = e.target.value;
-    if(H.kat !== 'all' && !KAT_OK.has(H.view)) H.view = 'svc';
-    draw();
-  });
   draw();
-
-  /* ---- ısı haritası ---- */
-  const S = LK.sub.length, agg = Array.from({length: S}, () => [[0, 0], [0, 0], [0, 0]]);
-  for(let i = 0; i < NPN; i++){ const a = agg[PN.sub[i]][PN.kr[i]]; a[0] += PN.risk[i]; a[1]++; }
-  const rows = LK.sub.map((ad, s) => {
-    const cells = agg[s].map(([sum, n]) => n ? sum / n : 0);
-    return {ad, s, cells, n: agg[s].reduce((a, c2) => a + c2[1], 0),
-            avg: agg[s].reduce((a, c2) => a + c2[0], 0) / Math.max(1, agg[s].reduce((a, c2) => a + c2[1], 0))};
-  }).sort((a, b) => b.avg - a.avg);
-  const cmax = Math.max(...rows.flatMap(r => r.cells));
-  $('hHeat').innerHTML = `<tr><th style="min-width:190px">Kategori</th>${HA.kritiklik.map(k => `<th>${k}</th>`).join('')}</tr>` +
-    rows.map(r => `<tr><td class="lbl">${r.ad}<small>ATA ${LK.ata[r.s]} · ${r.n} PN</small></td>` +
-      r.cells.map((v, ki) => `<td style="background:${lerpColor(v / cmax)}" title="${r.ad} × ${HA.kritiklik[ki]}: ortalama risk ${f1(v)}, ${agg[r.s][ki][1]} parça">${f1(v)}</td>`).join('') + '</tr>').join('');
 }
 
 /* =====================================================================
@@ -1229,9 +1256,8 @@ function renderSenaryo(){
   const el = $('v-senaryo');
   el.innerHTML = `
   <h2 class="sec-h">Kriz ve dayanıklılık simülatörü</h2>
-  <p class="sec-p">Her kriz ya talebi artırıp stoğun dayanma süresini kısaltır ya da tedarik süresini uzatır. Uyarı mantığımız
-  zaten bu iki değişkene dayandığı için bir krizi denemek, sadece bu değerleri değiştirmek demek. Hesap motoru,
-  float formülünün sahada %97 tuttuğu doğrulamaya yaslanıyor.</p>
+  <p class="sec-p">Her kriz ya stoğun dayanma süresini kısaltır ya da tedarik süresini uzatır.
+  Senaryo bu iki değişkeni değiştirir, 5.000 parça anında yeniden hesaplanır.</p>
   <div class="grid g12">
     <div class="card">
       <h3>Şok parametreleri</h3>
@@ -1241,10 +1267,8 @@ function renderSenaryo(){
       <div class="sl"><label>Servis hedefi sıkılaştırma <b id="lS">+0 pp</b></label><input type="range" id="sS" min="0" max="20" step="5" value="0"></div>
       <div class="ctl" style="margin:4px 0 0">${Object.entries(PRESETS).map(([k,p]) =>
         `<span class="chip sp${k==='baz'?' on':''}" data-p="${k}">${p.ad}</span>`).join('')}</div>
-      <div class="hint" style="margin-top:12px">Senaryolar farklı yerleri vuruyor. Motor ailesi krizi yalnız yeni nesil parçaların talebini,
-      lojistik krizi yalnız dışa bağımlı parçaların tedarik süresini, OEM gecikmesi yalnız küçülen klasik modellerin talebini etkiliyor.
-      Kur şoku ayrı bir katman: parçalar dolar cinsinden olduğu için piyasa değeri izleniyor ve nakit koruma modunda tamir kararı sıkılaştırılıyor.
-      Her çeyrek bir senaryo canlı olarak prova ediliyor.</div>
+      <div class="hint" style="margin-top:12px">Her senaryo farklı bir alt kümeyi vurur: motor krizi yeni nesil talebini,
+      lojistik dışa bağımlı tedarik sürelerini, OEM gecikmesi küçülen modellerin talebini.</div>
     </div>
     <div class="card">
       <h3>Etki: 5.000 parça canlı yeniden hesaplanıyor</h3>
@@ -1335,11 +1359,10 @@ function renderSenaryo(){
   </div>
 
   <div class="card" style="margin-top:14px;border-color:rgba(79,193,176,.35)">
-    <h3 style="color:${C.teal}">Kapanış: kabiliyet yatırımı bir yazılım ekranı değil, bir yatırım kararı</h3>
-    <div class="hint">${K.risk_listesi} parça hem kritik hem de iç tamiri olmayan parçalar. Bugün bunlara yılda <b>${mM(K.kab_bugun)}</b> dış tamir harcanıyor.
-    Bu parçaları iç tamire alırsak yılda <b style="color:${C.teal}">${mM(K.kab_tasarruf)} tasarruf ve ${mM(K.kab_sermaye)} tek seferlik serbesti</b> doğuyor.
-    Atölye kurulum maliyeti ayarlanabilir bir parametre. Hangi rakamı koyarsanız koyun, yıllık kazanç yatırımı birkaç yılda karşılıyor.
-    Aşağıda öncelik sırasına göre ilk 40 aday var. <span class="bg bg-warn">ÜÇLÜ</span> etiketi, hem kritik hem tamiri olmayan hem de geçmişsiz parçaları işaretliyor.</div>
+    <h3 style="color:${C.teal}">Kabiliyet yatırımı: öncelik sırasına göre ilk 40 aday</h3>
+    <div class="hint">${K.risk_listesi} parça kritik ve iç tamiri yok, dış tamire yılda <b>${mM(K.kab_bugun)}</b> gidiyor.
+    İç tamir yılda <b style="color:${C.teal}">${mM(K.kab_tasarruf)} tasarruf + ${mM(K.kab_sermaye)} serbesti</b> getirir.
+    <span class="bg bg-warn">ÜÇLÜ</span> = kritik + tamirsiz + geçmişsiz.</div>
     <div class="tw" style="max-height:420px"><table><thead><tr>
       <th>#</th><th>PN</th><th>Kategori</th><th>Model</th><th class="n">Yıllık talep</th><th class="n">Dış TAT</th>
       <th class="n">Dış harcama /yıl</th><th class="n">Tasarruf /yıl</th><th class="n">Serbesti</th><th></th>
@@ -1444,7 +1467,7 @@ function renderSenaryo(){
         ? `<span class="bg bg-warn">YENİ</span>`
         : `<span class="bg ${eski > n ? 'bg-teal' : 'bg-nk'}">${eski > n ? '▲' : '▼'} ${Math.abs(eski - n)}</span>`;
       return `<tr><td class="n">${n + 1}</td><td class="pn-link mono">PN-${PN.id[i]}</td>
-        <td>${LK.sub[PN.sub[i]]}</td><td>${KR_BADGE[PN.kr[i]]}</td>
+        <td>${LK.sub[PN.sub[i]]}</td><td style="text-align:center">${krDot(i)}</td>
         <td class="n">${f1(r.risk[i])}</td><td>${isaret}</td></tr>`;
     }).join('');
   }
@@ -1526,6 +1549,8 @@ function renderSenaryo(){
    ===================================================================== */
 const SOZLUK = [
   ['PN', 'Part Number · parça numarası', 'Takip edilen her bir komponent tipi. Veride 5.000 tane var.'],
+  ['Durum rozetleri', 'TÜKENİYOR · SİPARİŞTE · DIŞA BAĞIMLI · HURDA ADAYI', 'Parçanın bugünkü hâli. TÜKENİYOR: stok yenisi gelmeden bitiyor, sipariş yok. SİPARİŞTE: stok bitiyor ama yenisi yolda. DIŞA BAĞIMLI: iç tamir yok. HURDA ADAYI: tamir ekonomik değil.'],
+  ['Donörden söküm', 'Sahadaki adıyla kanibalizasyon', 'İhtiyaç duyulan parçanın, rafta bekleyen arızalı bir üniteden sökülüp kullanılması. Kayıt altında yapılır, donör borç defterine işlenir.'],
   ['AOG', 'Aircraft on Ground', 'Parça yokluğundan uçağın yerde kalması. Her saati doğrudan gelir kaybı.'],
   ['TAT', 'Turn Around Time', 'Bir parçanın tamire gidip dönmesinin ya da yeni satın almanın süresi.'],
   ['TTS', 'Time to Survive · dayanma süresi', 'Eldeki kullanılabilir stok, günlük talebe bölününce kaç gün yeteceği.'],

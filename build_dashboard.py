@@ -194,10 +194,34 @@ def build_payload():
         pay25=[r(a['u25'] / 1200, 5) for a in apt], pay33=[r(a['u33'] / 2000, 5) for a in apt],
         dist=[a['dist_km'] for a in apt], yon=[a['bearing'] for a in apt],
         yd=[a['yurtdisi'] for a in apt],
+        depo=[a['depo'] for a in apt], kalem=[a['kalem'] for a in apt],
+        adet=[a['adet'] for a in apt], kapsam=[a['aog_kapsam'] for a in apt],
+        tsaat=[a['tsaat'] for a in apt],
         krTot=kr_tot,
         ic_tamir_toplam=int(c.YURTICI_TAMIRDE_ADET.sum()),
         dis_tamir_toplam=int(c.YURTDISI_TAMIRDE_ADET.sum()),
     )
+    # --- parça rotası senaryoları (TEMSİLÎ demo; parçalar gerçek kırmızı listeden) ---------
+    # AOG uçağı bir istasyonda, 5 parça farklı depolardan geliyor. Aday kaynaklar deterministik:
+    # her parçada IST + iki dönüşümlü depo; önerileni JS, süreye göre seçer.
+    aog_kirmizi = c[c.KIRMIZI & c.KRITIK.str.contains('AOG')].sort_values('RISK', ascending=False)
+    donus = ['ESB', 'SAW', 'ADB', 'FRA', 'DXB', 'AMS']
+    havuz = ['FRA', 'LHR', 'CDG', 'DXB', 'AMS', 'JFK', 'JED', 'BER', 'SIN']   # pool ortağı hub'lar
+    def rota_senaryo(hedef, ucak, bas):
+        # Her parçada IST bulunmaz (ana depoda stok yok durumu) — öneriler farklı hub'lara dağılır.
+        # Kanal tipleri: depo transferi (kay), pool değişimi (pool), satın alma (alim = gerçek TAT_SAT).
+        parcalar = []
+        for n, (pn, s) in enumerate(aog_kirmizi.iloc[bas:bas + 5].iterrows()):
+            k1, k2, k3 = donus[n % 6], donus[(n + 2) % 6], donus[(n + 4) % 6]
+            aday = ['IST', k1, k2] if n % 3 == 0 else [k1, k2, k3]
+            kay = [k for k in aday if k != hedef][:3]
+            pool = [p_ for p_ in (havuz[(bas + n) % 9], havuz[(bas + n + 3) % 9]) if p_ != hedef][:2]
+            pool = [p_ for p_ in pool if p_ not in kay]
+            parcalar.append(dict(pn=str(pn).replace('PN-', ''), sub=s.SUB, kay=kay,
+                                 pool=pool, alim=int(s.TAT_SAT)))
+        return dict(ucak=ucak, hedef=hedef, parcalar=parcalar)
+    harita['rota'] = [rota_senaryo('AYT', 'TC-CAT', 0), rota_senaryo('DIY', 'TC-LYN', 5),
+                      rota_senaryo('TZX', 'TC-KRG', 10), rota_senaryo('ADB', 'TC-EGE', 15)]
 
     # ---------------------------------------------- ABC×XYZ segmentasyon matrisi
     # ABC: kümülatif talep payına göre (A: ilk %80'i taşıyanlar, B: %80–95, C: kalan)
@@ -459,6 +483,8 @@ def build_payload():
         ato=[1 if v == 'VAR' else 0 for v in s.ATOLYE],
         lead=r(s.LEAD, 0), ttr=r(s.TTR, 0),
         t25=r(s.TALEP_25, 0), t33=r(s.TALEP_33, 1), rate33=r(s.Q_RATE_33, 3),
+        # tahmin bölümü: iki yöntemin uçları (bant) — model bazlı ve THY/pool karışımı
+        t33a=r(s.TALEP_33_MODEL, 0), t33b=r(s.TALEP_33_PNSEG, 0),
         svc=r(s.SVC, 0), gay=r(s.GAYRIFAAL_ADET, 0), tam=r(s.TAMIRDE, 0), po=r(s.ACIK_SATINALMA_ADET, 0),
         tts=r(s.TTS.replace(np.inf, 9999).clip(upper=9999), 0),
         min33=r(s.MIN_2033, 0), max33=r(s.MAX_2033, 0), min25=r(s.MIN_2025, 0),
@@ -484,7 +510,9 @@ def build_payload():
                                                   s.SCRAP_ANOMALI, s.POOL_BAGIMLI)],
     )
     sub2ata = c.groupby('SUB').ATA.first()
-    lookup = dict(sub=subs, mdl=models, kr=kr_sira, ata=[int(sub2ata[x]) for x in subs])
+    mdl_gr = c.groupby('MODEL').GROWTH.first()
+    lookup = dict(sub=subs, mdl=models, kr=kr_sira, ata=[int(sub2ata[x]) for x in subs],
+                  mdl_b=[round(float(mdl_gr[m]), 2) for m in models])   # filo büyüme çarpanı (tahmin sürücüsü)
 
     # ------------------------------------------- kabiliyet ROI sıralayıcısı (demo kapanışı)
     rd = c[c.RISK_LISTESI].copy()
@@ -519,6 +547,7 @@ def build_payload():
 def render(payload: dict) -> str:
     read = lambda p: open(os.path.join(HERE, p), encoding='utf-8').read()
     chartjs = read('vendor/chart.umd.js')
+    dunya = read('vendor/dunya.js')          # 110m dünya konturu (Natural Earth türevi, ~120 KB)
     css = read('assets/app.css')
     js = read('assets/app.js')
     data = json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
@@ -529,6 +558,7 @@ def render(payload: dict) -> str:
 <style>{css}</style></head>
 <body>
 <script>{chartjs}</script>
+<script>{dunya}</script>
 <script>const DATA={data};</script>
 <script>{js}</script>
 </body></html>"""

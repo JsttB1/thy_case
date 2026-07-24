@@ -189,10 +189,14 @@ step('parametre kaydırıcısı canlı yeniden hesap', () => {
 });
 
 /* yeni özellikler: harita */
-step('harita SVG zemini kuruldu (TR + küresel)', () => {
-  const svg = els['hSvg'];
-  if (!svg._html.includes('tland')) throw new Error('Türkiye konturu yok');
-  if (!svg._html.includes('AZİMUT')) throw new Error('küresel görünüm zemini yok');
+step('harita dünya zemini + depo katmanı kuruldu', () => {
+  const HA = DATA.harita;
+  if (!HA.depo || HA.depo.length !== 25) throw new Error('depo katmanı yok');
+  if (HA.depo[HA.kod.indexOf('IST')] !== 'ana_depo') throw new Error('IST ana depo değil');
+  if (!HA.rota || HA.rota.length !== 4 || HA.rota[0].parcalar.length !== 5)
+    throw new Error('rota senaryoları eksik');
+  const p0 = HA.rota[0].parcalar[0];
+  if (!p0.pool || !p0.pool.length || p0.alim == null) throw new Error('pool/satın alma kanalları eksik');
 });
 step('havalimanı mutabakatı — case tablosu birebir', () => {
   const HA = DATA.harita;
@@ -208,11 +212,19 @@ step('havalimanı mutabakatı — case tablosu birebir', () => {
   const p25 = HA.pay25.reduce((a,b)=>a+b,0);
   if (Math.abs(p25 - 1) > .01) throw new Error('pay25 toplamı ' + p25);
 });
-step('küresel ağ moduna geçiş', () => {
-  els['v-harita']._fire('click', { target: { closest: sel => sel === '.hm' ? { dataset: { m: 'gl' } } : null } });
-  if (__APP.H.mode !== 'gl') throw new Error('mod değişmedi');
-  els['v-harita']._fire('click', { target: { closest: sel => sel === '.hm' ? { dataset: { m: 'tr' } } : null } });
-  if (__APP.H.mode !== 'tr') throw new Error('geri dönmedi');
+step('parça rotası katmanı', () => {
+  const fire = t => els['v-harita']._fire('click', { target: { closest: sel => sel === '.tg' ? { dataset: { t } } : null } });
+  fire('rota'); if (!__APP.H.rota) throw new Error('rota katmanı açılmadı');
+  if (!els['hRota']._html.includes('Kritik yol')) throw new Error('rota paneli dolmadı');
+  fire('rota'); if (__APP.H.rota) throw new Error('rota kapanmadı');
+});
+step('watchlist → haritada göster köprüsü', () => {
+  __APP.H._parcaGoster(0, 'AYT', 'pool');
+  if (!__APP.H.wp) throw new Error('wp kurulmadı');
+  if (!els['hRota']._html.includes('Watchlist')) throw new Error('wp paneli dolmadı');
+  if (__APP.H.rk == null) throw new Error('kanal önseçimi yapılmadı');
+  els['v-harita']._fire('click', { target: { closest: sel => sel === '[data-wkapat]' ? {} : null } });
+  if (__APP.H.wp) throw new Error('kapat çalışmadı');
 });
 step('gezgin THY/Pool kırılımı + ATA sözlüğü', () => {
   if (DATA.pn.tq1.length !== 5000) throw new Error('tq1 eksik');
@@ -223,10 +235,10 @@ step('gezgin THY/Pool kırılımı + ATA sözlüğü', () => {
   }
   if (DATA.lookup.ata.length !== DATA.lookup.sub.length) throw new Error('ata sözlüğü eksik');
 });
-step('harita kategori filtresi', () => {
-  els['hKat'].value = '0'; els['hKat']._fire('change', { target: els['hKat'] });
-  if (__APP.H.kat !== '0') throw new Error('kategori seçilmedi');
-  els['hKat'].value = 'all'; els['hKat']._fire('change', { target: els['hKat'] });
+step('rota senaryo değişimi', () => {
+  els['v-harita']._fire('click', { target: { closest: sel => sel === '.rsc' ? { dataset: { rs: '2' } } : null } });
+  if (__APP.H.rsen !== 2) throw new Error('senaryo değişmedi');
+  els['v-harita']._fire('click', { target: { closest: sel => sel === '.rsc' ? { dataset: { rs: '0' } } : null } });
 });
 step('harita kriz katmanı + 2033 + akış', () => {
   const fire = t => els['v-harita']._fire('click', { target: { closest: sel => sel === '.tg' ? { dataset: { t } } : null } });
@@ -251,12 +263,12 @@ step('derin analiz payload — MC/tornado/opt/backtest', () => {
     if (DATA.opt.butce[i] < DATA.opt.butce[i-1]) throw new Error('bütçe eğrisi monoton değil');
   if (!(DATA.backtest.toplam_hata[3] < 2)) throw new Error('mevsimli toplam hata beklenenden büyük');
 });
-step('mimari şeması gömülü', () => {
+step('analiz kartları gömülü', () => {
   const all = Object.values(els).map(e => e._html).join(' ');
-  if (!all.includes('GERİ YAZMA YOK')) throw new Error('mimari SVG yok');
   if (!all.includes('Monte Carlo doğrulaması')) throw new Error('MC kartı yok');
   if (!all.includes('Kaynak önceliklendirme')) throw new Error('opt kartı yok');
   if (!all.includes('Geriye dönük test')) throw new Error('backtest kartı yok');
+  if (all.includes('GERİ YAZMA YOK')) throw new Error('mimari SVG geri gelmiş — sade sürümde olmamalı');
 });
 
 

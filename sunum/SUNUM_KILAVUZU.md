@@ -7,7 +7,20 @@
 
 ## Sunum sırası önerisi (resmi 7 slayt)
 S1 kapak → S2 problem+boşluk → S3 çözüm akışı → S4 prototip → **CANLI DEMO** →
-S5 özellikler+doğrulama → S6 önceliklendirme·kriz·başarı → S7 kapanış. Demo ortada: jüri uyanıkken.
+S5 öngörü motoru+Copilot → S6 önceliklendirme·kriz·başarı → S7 kapanış+riskler. Demo ortada: jüri uyanıkken.
+
+## Resmi jüri soruları → slayt eşlemesi
+Organizatörün yedi sorusu sunumda dolaylı olarak yanıtlanır; sorulursa ilgili slayta dönülür.
+
+| Resmi soru | Nerede yanıtlanıyor |
+|---|---|
+| Problemi nasıl tanımlıyorsunuz? | S2: büyüme değil yer değiştirme, 72/134, ayrık sistem, hub kayması |
+| Neden önemli? | S2 sağ paneller: 11 parça uçağı yerde bırakır, elle denge 2.000 uçakta tutmaz; S6: yerde bekleyen uçağın her saati gelir kaybı |
+| Çözüm nasıl çalışıyor? | S3 altı adım + üç faz; S4 canlı prototip; S5 tahmin motoru |
+| Hangi değer ve fayda? | S6 sol sütun + üç grafik: 67,8 / 23,3→39 / 52 M$, kabiliyet 12,1 M$/yıl, 72→0 |
+| Gerçek hayatta nasıl uygulanır? | S3 salt okunur bağlantı + FAZ bandı: ölçüt kapılı fazlı geçiş; tek dosyalık çalışan prototip kanıt |
+| Uygulama riskleri? | S7 "Riskler ve karşılıkları" paneli: veri kalitesi, model hatası, benimseme, entegrasyon |
+| Gelecekte nasıl gelişir? | S3 vizyon şeridi: acil getirim, bekleme penceresi bakımı, parça değişimi; S5 Copilot ve geri bildirim döngüsü |
 
 ## Canlı demo — tıklama planı
 
