@@ -4,6 +4,7 @@ import {
   Boxes,
   Gauge,
   Map as MapIcon,
+  Sparkles,
   SlidersHorizontal,
   Table,
   TrendingUp,
@@ -14,6 +15,7 @@ import { useStore } from '../store';
 import { prefetch } from '../data/useData';
 
 const IKONLAR: Record<IconName, LucideIcon> = {
+  ai: Sparkles,
   gauge: Gauge,
   trending: TrendingUp,
   boxes: Boxes,

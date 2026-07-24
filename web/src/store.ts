@@ -58,7 +58,7 @@ interface AppState {
 }
 
 export const useStore = create<AppState>((set) => ({
-  aktifSekme: 'overview',
+  aktifSekme: 'ai',
   filoYili: 2033,
 
   kritiklikFiltresi: [],

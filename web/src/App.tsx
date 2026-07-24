@@ -16,7 +16,7 @@ const App: FC = () => {
 
   // shell metinleri meta.json'dan gelir; ilk sekmenin verisini de önden al
   useEffect(() => {
-    prefetch(['meta', ...needsByTab('overview')]);
+    prefetch(['meta', ...needsByTab('ai')]);
   }, []);
 
   return (

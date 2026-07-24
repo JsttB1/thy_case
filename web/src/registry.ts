@@ -11,6 +11,7 @@ import type { DataKey } from './data/types';
  */
 
 export type TabId =
+  | 'ai'
   | 'overview'
   | 'demand'
   | 'inventory'
@@ -19,7 +20,15 @@ export type TabId =
   | 'scenario'
   | 'explorer';
 
-export type IconName = 'gauge' | 'trending' | 'boxes' | 'alert' | 'map' | 'sliders' | 'table';
+export type IconName =
+  | 'ai'
+  | 'gauge'
+  | 'trending'
+  | 'boxes'
+  | 'alert'
+  | 'map'
+  | 'sliders'
+  | 'table';
 
 export interface TabDef {
   id: TabId;
@@ -54,14 +63,16 @@ export interface FeatureDef {
   chrome?: 'card' | 'none';
 }
 
+/**
+ * 3 ana başlık: AI karar merkezi (ilk sayfa, tüm analitiği içselleştiren öneri
+ * motoru) · ağ & kapsama (harita) · senaryo simülatörü (kriz). Eski analitik
+ * sekmeler (overview/demand/inventory/risk/explorer) feature olarak kayıtta kalır
+ * ama üst gezinmeden çıkarıldı — içgörüleri AI Karar Merkezi'nde birleşti.
+ */
 export const TABS: TabDef[] = [
-  { id: 'overview', label: 'Genel Bakış', icon: 'gauge' },
-  { id: 'demand', label: 'Talep & Tahmin', icon: 'trending' },
-  { id: 'inventory', label: 'Envanter Sağlığı', icon: 'boxes' },
-  { id: 'risk', label: 'Risk & Kritiklik', icon: 'alert' },
+  { id: 'ai', label: 'AI Karar Merkezi', icon: 'ai' },
   { id: 'network', label: 'Ağ & Kapsama', icon: 'map' },
   { id: 'scenario', label: 'Senaryo Simülatörü', icon: 'sliders' },
-  { id: 'explorer', label: 'PN Gezgini', icon: 'table' },
 ];
 
 /**
@@ -69,7 +80,22 @@ export const TABS: TabDef[] = [
  * Component alanına React.lazy(() => import(...)) bağlanacak.
  */
 export const FEATURES: FeatureDef[] = [
-  /* ── Sekme 1 — Genel Bakış ─────────────────────────────── */
+  /* ── Sekme: AI Karar Merkezi (ilk sayfa) ───────────────── */
+  {
+    id: 'AI0',
+    tab: 'ai',
+    title: 'AI Karar Merkezi',
+    method:
+      'tarayıcı içi kural motoru · her PN için sipariş/tamir/exchange/transfer kararı, gerekçesiyle',
+    span: 12,
+    minHeight: 720,
+    status: 'live',
+    needs: ['pn', 'inventory', 'kpi', 'stations'],
+    chrome: 'none',
+    Component: lazy(() => import('./features/ai/AiCommandCenter')),
+  },
+
+  /* ── (Arşiv) Genel Bakış — gezinmede yok, feature olarak korunuyor ── */
   {
     id: 'F01',
     tab: 'overview',
