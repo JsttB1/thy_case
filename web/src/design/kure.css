@@ -1,0 +1,673 @@
+/* =====================================================================
+   HARİTA — tam ekran 3D küre ve cam HUD katmanı.
+
+   Bu dosya YALNIZ harita sekmesini sarar (`.kure`), tıpkı code.css'in CODE'u
+   sarması gibi; uygulamanın kalanı açık THY temasında kalır. Küre ekranın
+   tamamını kaplar, paneller kürenin üstünde yüzer — harita bir kartın içinde
+   değil, ekranın kendisidir.
+
+   PALET (27 Tem 2026, kullanıcı kararı): SİYAH · KIRMIZI · BEYAZ. Mavi/cyan
+   yok. Yapı (çerçeve, çip, ızgara) beyazın düşük opaklıklarıyla çizilir;
+   KIRMIZI yalnız üç işe ayrılır — seçim/odak, alarm, marka eylemi. Böylece
+   ekranda kırmızı gördüğün her yer "buraya bak" demektir (bkz. kure/kureStil.ts).
+   ===================================================================== */
+
+.kure {
+  /* Küre zemini koyu kalır (medya yüzeyi), HUD panelleri AÇIK cam olur —
+     böylece harita, sayfanın geri kalanıyla aynı dili konuşur. */
+  --k-bg: var(--md-1);
+  --k-panel: var(--cam);
+  --k-panel2: var(--cam-2);
+  --k-line: var(--cam-line);
+  --k-line2: var(--ln-strong);
+  --k-tx: var(--tx);
+  --k-tx2: var(--tx-2);
+  --k-tx3: var(--tx-3);
+  --k-aks: var(--tk-red); /* seçim / odak */
+  --k-marka: var(--tk-red); /* birincil eylem */
+  --k-red: var(--st-red); /* alarm */
+  --k-uyari: var(--st-amber);
+  --k-iyi: var(--st-teal);
+
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  height: calc(100vh - var(--ust-h, 56px));
+  overflow: hidden;
+  background: var(--k-bg);
+  color: var(--k-tx);
+  font-feature-settings: 'tnum' 1;
+  user-select: none;
+}
+
+/* Tam ekran demek sayfanın da kaymaması demek: gövdenin alt boşluğu (base.css,
+   44px) bu sekmede geri alınır, yoksa kürenin altında boş bir şerit kalıyor ve
+   tekerlek sayfayı kaydırıyordu. */
+body:has(.kure) {
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.kure-sahne {
+  position: absolute;
+  inset: 0;
+}
+.kure-sahne canvas {
+  display: block;
+  outline: none;
+}
+.kure-yukleniyor,
+.kure-yedek {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  padding: 40px;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: 0.2em;
+  color: var(--md-tx-2);
+}
+.kure-yedek {
+  place-content: start center;
+  padding-top: 90px;
+  letter-spacing: 0;
+  font-family: var(--tk-font);
+  font-size: var(--fs-kucuk);
+  color: var(--md-tx-2);
+  max-width: 620px;
+  margin: 0 auto;
+}
+.kure-yedek b {
+  color: var(--md-tx);
+}
+.kure-yedek ul {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  line-height: 1.7;
+}
+
+/* ---------------------------------------------------------------- HUD ızgara */
+.kure-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.kure-hud > * {
+  pointer-events: auto;
+}
+
+/* --------------------------------------------------------------- cam panel */
+.kp {
+  position: absolute;
+  background: var(--k-panel);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid var(--k-line);
+  border-radius: var(--r-md);
+  box-shadow: var(--cam-sh);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.kp-bas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  border-bottom: 1px solid var(--k-line);
+  background: linear-gradient(180deg, rgba(22, 35, 58, 0.035), transparent);
+  flex: none;
+}
+.kp-bas h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--k-tx);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kp-bas .kod {
+  font-family: var(--tk-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: var(--k-aks);
+  border: 1px solid var(--k-line2);
+  border-radius: 2px;
+  padding: 2px 5px;
+  flex: none;
+}
+.kp-bas .krz {
+  margin-left: auto;
+  font-family: var(--tk-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--k-tx3);
+  white-space: nowrap;
+}
+.kp-bas .krz.al {
+  color: var(--k-uyari);
+}
+.kp-bas .kat {
+  color: var(--k-tx3);
+  font-size: 11px;
+}
+.kp-bas[role='button'] {
+  cursor: pointer;
+}
+.kp-ic {
+  padding: 10px 11px 11px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.kp-ic.liste {
+  padding: 4px 4px 6px;
+}
+
+.ketiket {
+  font-family: var(--tk-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.17em;
+  text-transform: uppercase;
+  color: var(--k-tx3);
+  margin: 9px 0 5px;
+}
+.kp-ic > .ketiket:first-child {
+  margin-top: 0;
+}
+.ketiket .pas-not {
+  text-transform: none;
+  letter-spacing: 0.02em;
+  color: #5a5c63;
+}
+.ksatir {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* --------------------------------------------------------------------- çip */
+.kcip {
+  font: inherit;
+  font-size: 10.5px;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--k-tx2);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--k-line);
+  border-radius: 2px;
+  padding: 5px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition:
+    color 0.16s,
+    border-color 0.16s,
+    background 0.16s;
+}
+.kcip:hover:not(:disabled) {
+  color: var(--k-tx);
+  border-color: var(--k-line2);
+  background: rgba(22, 35, 58, 0.06);
+}
+/* Seçili çip THY düğmesi gibi: marka kırmızısı dolgu + beyaz metin. Parlak
+   alarm tonu (--k-aks) dolgu olarak kullanılınca üzerindeki yazı bulanıyordu. */
+.kcip.on {
+  color: #ffffff;
+  background: var(--k-marka);
+  border-color: var(--k-marka);
+  font-weight: 600;
+}
+.kcip.pas,
+.kcip:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+.kdot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+/* ------------------------------------------------------------- panel yerleri */
+.sol-ust {
+  left: 16px;
+  top: 14px;
+  width: 296px;
+}
+.sol-alt {
+  left: 16px;
+  bottom: 54px;
+  width: 296px;
+  max-height: min(42vh, 380px);
+}
+.sol-alt.kapali {
+  max-height: none;
+}
+.sag-ust {
+  right: 16px;
+  top: 14px;
+  width: 330px;
+}
+.sag-alt {
+  right: 16px;
+  bottom: 54px;
+  width: 392px;
+  max-height: min(52vh, 470px);
+}
+
+.ktoplam {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 11px;
+  padding-top: 9px;
+  border-top: 1px solid var(--k-line);
+  font-size: 11px;
+  color: var(--k-tx3);
+}
+.ktoplam b {
+  font-family: var(--tk-font-mono);
+  font-size: 0.95rem;
+  color: var(--k-aks);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------- istasyon satırı */
+.ksat {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 5px 7px;
+  background: none;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 2px;
+  color: var(--k-tx2);
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+}
+.ksat:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--k-tx);
+}
+.ksat.on {
+  background: rgba(255, 45, 64, 0.14);
+  border-left-color: var(--k-aks);
+  color: var(--k-tx);
+}
+.ksat b {
+  font-family: var(--tk-font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  color: var(--k-tx);
+  flex: none;
+  width: 34px;
+}
+.ksat .ad {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--k-tx3);
+}
+.ksat .ray {
+  width: 46px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+  overflow: hidden;
+  flex: none;
+}
+.ksat .ray i {
+  display: block;
+  height: 100%;
+  background: var(--k-aks);
+  opacity: 0.75;
+}
+.ksat .dg {
+  font-family: var(--tk-font-mono);
+  font-size: 10.5px;
+  color: var(--k-tx);
+  width: 54px;
+  text-align: right;
+  flex: none;
+}
+/* Kanal satırı: ad esner ve gerekirse kısalır, sağdaki sayı sütunları sabit
+   kalır — süre/maliyet alt alta kaymasın diye hepsi tek satıra kilitli. */
+.ksat.kanal {
+  padding: 6px 7px;
+  gap: 6px;
+}
+.ksat.kanal b {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.ksat.kanal .ad {
+  flex: none;
+  width: 34px;
+  text-align: right;
+}
+.ksat.kanal .dg {
+  width: 56px;
+  white-space: nowrap;
+}
+.ksat.kanal .dg.mal {
+  width: 62px;
+  color: var(--k-tx3);
+}
+/* "önerilen" rozeti. background AÇIKÇA sıfırlanır: base.css'teki açık temalı
+   `.oner` kartı (teal zemin) tek sınıf olduğu için buraya sızıyor ve rozet
+   koyu HUD'un ortasında açık bir kutuya dönüşüyordu (ekranda doğrulandı). */
+.ksat .oner {
+  font-family: var(--tk-font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  color: var(--k-tx);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  border-radius: 2px;
+  padding: 1px 4px;
+  margin: 0;
+  flex: none;
+}
+.ktablo {
+  border-top: 1px solid var(--k-line);
+  padding-top: 4px;
+}
+
+/* --------------------------------------------------------------- detay kutusu */
+.kizgara {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px 12px;
+}
+.kizgara > div {
+  min-width: 0;
+}
+.kizgara span {
+  display: block;
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--k-tx3);
+  margin-bottom: 2px;
+}
+.kizgara b {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--k-tx);
+}
+.kizgara b i {
+  font-style: normal;
+  font-weight: 600;
+}
+.kizgara b i.uy {
+  color: var(--k-uyari);
+}
+.kizgara b i.iy {
+  color: var(--k-iyi);
+}
+.knot {
+  margin-top: 9px;
+  padding-top: 8px;
+  border-top: 1px solid var(--k-line);
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--k-tx3);
+}
+.knot b {
+  color: var(--k-tx2);
+}
+.kuyari {
+  margin-top: 9px;
+  padding: 6px 8px;
+  border: 1px solid var(--st-red-line);
+  background: var(--st-red-soft);
+  border-radius: var(--r-sm);
+  font-size: 10.5px;
+  color: var(--st-red);
+}
+.mono {
+  font-family: var(--tk-font-mono);
+}
+
+/* ------------------------------------------------------------ kamera düğmeleri */
+/* Kamera kumandası alt ORTADA: sağ kenarda dururken rota paneliyle çakışıyordu
+   (ölçüldü). Küre ortada olduğu için alt orta şerit hep boş kalır. */
+.kure-kamera {
+  position: absolute;
+  left: 50%;
+  bottom: 52px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+}
+.kure-kamera button {
+  width: 32px;
+  height: 30px;
+  border: 1px solid var(--k-line);
+  background: var(--k-panel);
+  backdrop-filter: blur(10px);
+  color: var(--k-tx2);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    color 0.16s,
+    border-color 0.16s;
+}
+.kure-kamera button:hover,
+.kure-kamera button.on {
+  color: var(--k-aks);
+  border-color: var(--k-line2);
+}
+
+/* ------------------------------------------------------------------ alt şerit */
+.kure-serit {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.94) 55%);
+  backdrop-filter: blur(8px);
+  font-size: 10.5px;
+  color: var(--k-tx3);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.kure-serit .durum {
+  font-family: var(--tk-font-mono);
+  font-size: 10px;
+  letter-spacing: 0.11em;
+  color: var(--k-tx2);
+  border: 1px solid var(--k-line);
+  border-radius: 2px;
+  padding: 4px 8px;
+  flex: none;
+}
+.kure-serit .durum.rota {
+  color: var(--k-aks);
+  border-color: var(--k-line2);
+}
+.kure-serit .durum.kriz {
+  color: var(--k-red);
+  border-color: var(--st-red-line);
+}
+.kure-serit .lej {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+}
+.kure-serit .lej.sol-bosluk {
+  color: var(--tx-4);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+.kure-serit .ayr {
+  width: 1px;
+  height: 15px;
+  background: var(--k-line);
+  flex: none;
+}
+.kure-serit .ipucu-jest {
+  margin-left: auto;
+  font-family: var(--tk-font-mono);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #55575e;
+  flex: none;
+}
+
+/* ------------------------------------------------------------- küre etiketleri */
+.kure-etiketler {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.kist {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 6px 3px 7px;
+  background: var(--cam);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--cam-line);
+  border-radius: var(--r-sm);
+  box-shadow: 0 4px 12px -4px rgba(8, 15, 28, 0.5);
+  font-family: var(--tk-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  white-space: nowrap;
+  opacity: 0;
+  cursor: pointer;
+  transition:
+    opacity 0.2s,
+    border-color 0.16s;
+  will-change: transform;
+}
+.kist b {
+  color: var(--k-tx);
+  font-weight: 600;
+}
+.kist span {
+  color: var(--k-tx3);
+  font-size: 9px;
+}
+.kist.dis b {
+  color: var(--k-aks);
+}
+.kist.on {
+  border-color: var(--k-aks);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(232, 25, 50, 0.18), 0 6px 16px -6px rgba(8, 15, 28, 0.5);
+}
+.kist:hover {
+  border-color: var(--k-line2);
+}
+
+/* --------------------------------------------------------------------- ipucu */
+.kure-ipucu {
+  position: absolute;
+  z-index: 5;
+  max-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--cam);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--cam-line);
+  border-radius: var(--r-sm);
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--k-tx2);
+  pointer-events: none;
+  box-shadow: var(--cam-sh);
+}
+.kure-ipucu b {
+  color: var(--k-tx);
+}
+
+/* --------------------------------------------------------------- dipnot paneli */
+.kure-dipnot {
+  position: absolute;
+  left: 50%;
+  bottom: 92px;
+  transform: translateX(-50%);
+  z-index: 3;
+  max-width: 620px;
+  padding: 8px 12px;
+  background: rgba(10, 10, 13, 0.74);
+  border: 1px solid var(--k-line);
+  border-radius: 3px;
+  font-size: 10px;
+  line-height: 1.55;
+  color: #5a5c63;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------------- dar ekran */
+@media (max-width: 1280px) {
+  .sol-ust,
+  .sol-alt {
+    width: 258px;
+  }
+  .sag-ust {
+    width: 290px;
+  }
+  .sag-alt {
+    width: 340px;
+  }
+}
+@media (max-width: 980px) {
+  .kure {
+    height: calc(100vh - var(--ust-h, 56px));
+  }
+  .sol-alt {
+    display: none;
+  }
+  .sag-ust,
+  .sag-alt {
+    width: 300px;
+  }
+  .kure-serit .lej.sol-bosluk,
+  .kure-serit .ipucu-jest {
+    display: none;
+  }
+}

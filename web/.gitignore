@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dist-tek-dosya/
+*.local
+.vite/
+
+# NOT: src/data/payload.json BİLEREK repoda — klonlayan, Python/uv kurmadan
+# uygulamayı çalıştırabilsin. Üreteni: build_dashboard.py (ya da scripts/veri-cikar.mjs).

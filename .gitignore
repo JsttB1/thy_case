@@ -1,0 +1,39 @@
+# Python ortamları ve önbellekler
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# OS / editör
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Node (web/ kendi .gitignore'una da sahip)
+node_modules/
+dist/
+dist-tek-dosya/
+
+# NOT: veri/eski/model_results.json ve veri/eski/demand_model.keras BİLEREK repoda —
+# klonlayan, TensorFlow kurmadan öngörü bölümünü üretebilsin.
+
+# Büyük yerel kaynak PDF'leri — repoya alınmaz, diskte veri/eski/ altında durur
+# (Grp(910.pdf: basılı case taraması ~42 MB; makale yeniden indirilebilir)
+veri/eski/Grp(910.pdf
+veri/eski/aerospace-13-00110-v2.pdf
+
+# TensorFlow / Keras geçicileri
+*.keras.tmp
+logs/
+*.h5.tmp
+
+# Office kilit dosyaları
+~$*
+**/~$*
+
+# Skeç / tanıtım videosu prop'ları — uygulamanın parçası değil, repoya alınmaz
+skec/

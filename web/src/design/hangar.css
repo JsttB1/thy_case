@@ -1,0 +1,640 @@
+/* =====================================================================
+   GİRİŞ — dijital hangar açılışı
+
+   TEK KOYU YÜZEY KURALI'nın tek istisnası: burası bir SAHNE, sayfa değil.
+   Gerekçe tokens.css'teki ile aynı çizgide — koyu ton 3D görüntünün içinde
+   kalır; giriş ekranının tamamı zaten o görüntüden ibarettir. Kapıdan
+   geçildiği anda uygulama açık THY temasına döner.
+
+   Renkler yine token: --md-* (sahne yüzeyleri), --cam-* (cam HUD),
+   --tk-red (kimlik) ve --st-red (alarm). Yerel renk sabiti YOK.
+   ===================================================================== */
+
+.hgr {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background: var(--md-1);
+  color: var(--md-tx);
+  overflow: hidden;
+  font-family: var(--tk-font-sans);
+  font-feature-settings: 'tnum' 1;
+}
+
+/* giriş açıkken arkadaki uygulama kaydırılmasın */
+body.hgr-kilit {
+  overflow: hidden;
+}
+
+.hgr-sahne {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.hgr-sahne canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* Vinyet: 3D sahne her karede farklı parlıyor, HUD yazısı ise sabit yerde
+   duruyor. Köşe karartması olmadan başlık bazı karelerde pist ışığının
+   üstüne düşüp okunmaz oluyordu. */
+.hgr-vinyet {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(6, 11, 20, 0.86) 0%, rgba(6, 11, 20, 0.34) 38%, transparent 62%),
+    linear-gradient(0deg, rgba(6, 11, 20, 0.9) 0%, transparent 26%),
+    linear-gradient(180deg, rgba(6, 11, 20, 0.72) 0%, transparent 20%);
+}
+
+.hgr > header,
+.hgr > .hgr-govde,
+.hgr > footer {
+  position: relative;
+  z-index: 3;
+}
+
+/* ------------------------------------------------------------------ üst bar */
+.hgr-ust {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px clamp(18px, 3.4vw, 44px);
+}
+.hgr-marka {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--tk-font-display);
+  letter-spacing: 0.16em;
+  font-size: var(--fs-kucuk);
+}
+.hgr-marka b {
+  font-weight: 700;
+}
+.hgr-marka i {
+  font-style: normal;
+  font-family: var(--tk-font-sans);
+  letter-spacing: 0.02em;
+  color: var(--md-tx-3);
+  border-left: 1px solid var(--md-line);
+  padding-left: 10px;
+}
+/* Koyu sahnede aynı ayraç: çizgi rengi medya yüzeyinin kendi çizgisinden. */
+.hgr-marka .thy-logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 2px;
+  padding-right: 12px;
+  border-right: 1px solid var(--md-line);
+  box-sizing: content-box;
+}
+.hgr-marka-iz {
+  width: 20px;
+  height: 20px;
+  color: var(--tk-red);
+  flex: none;
+}
+.hgr-rozet {
+  margin-left: auto;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: var(--tr-genis);
+  color: var(--md-tx-3);
+  border: 1px solid var(--md-line);
+  border-radius: var(--r-tam);
+  padding: 4px 10px;
+}
+/* 3D serbest bakış anahtarı — açıkken marka kırmızısında, "kamera sende" */
+.hgr-serbest {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: 1px solid var(--md-line-2);
+  border-radius: var(--r-tam);
+  color: var(--md-tx-2);
+  padding: 6px 13px;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: var(--tr-genis);
+  transition: all var(--hiz-hizli) var(--egri-standart);
+}
+.hgr-serbest svg {
+  width: 15px;
+  height: 15px;
+}
+.hgr-serbest:hover {
+  color: var(--md-tx);
+  border-color: var(--md-tx-3);
+}
+.hgr-serbest.on {
+  background: var(--tk-red);
+  border-color: var(--tk-red);
+  color: #fff;
+}
+
+.hgr-atla {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 1px solid var(--md-line-2);
+  border-radius: var(--r-tam);
+  color: var(--md-tx);
+  padding: 6px 14px;
+  font-size: var(--fs-etiket);
+  letter-spacing: 0.1em;
+  transition: all var(--hiz-hizli) var(--egri-standart);
+}
+.hgr-atla span {
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  color: var(--md-tx-3);
+  border: 1px solid var(--md-line);
+  border-radius: var(--r-xs);
+  padding: 1px 5px;
+}
+.hgr-atla:hover {
+  background: var(--tk-red);
+  border-color: var(--tk-red);
+  color: #fff;
+}
+.hgr-atla:hover span {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* -------------------------------------------------------------------- gövde */
+.hgr-govde {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 clamp(18px, 3.4vw, 44px);
+  min-height: 0;
+  pointer-events: none;
+}
+.hgr-govde > * {
+  pointer-events: auto;
+}
+.hgr-blok {
+  max-width: min(52ch, 46vw);
+}
+
+.hgr-perde-no {
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: var(--tr-genis);
+  color: var(--md-tx-3);
+  margin-bottom: 14px;
+}
+.hgr-perde-no i {
+  font-style: normal;
+  color: var(--tk-red);
+  font-weight: 700;
+}
+
+/* --- dev marka kilidi (perde 1) --- */
+.hgr-dev {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--tk-font-display);
+  margin: 0;
+}
+.hgr-dev .tech {
+  font-size: clamp(0.9rem, 2.2vw, 1.9rem);
+  font-weight: 500;
+  letter-spacing: 0.48em;
+  color: var(--md-tx-2);
+  padding-left: 0.4em;
+  margin-bottom: 0.15em;
+}
+/* DÜZ RENK — gradyan + background-clip:text KALDIRILDI.
+   Kayan gradyan harfleri eşitsiz aydınlatıyordu: "Y" tam açık banda denk
+   gelince gövdesi kayboluyor, harf kırık görünüyordu. Ekran kaydında bu daha
+   da belirginleşiyor (kare kare farklı harf sönüyor). Dev logoda okunaklılık
+   efektten önce gelir; parlama artık 3D sahnenin işi. */
+.hgr-dev .cat {
+  font-size: clamp(3rem, 9.6vw, 9.4rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  /* line-height 0.82 → 0.95: sıkı satır yüksekliği bazı fontlarda glif
+     kutusunu kırpıyordu (Y ve T'nin üst köşeleri). */
+  line-height: 0.95;
+  color: #f4f7fb;
+  text-shadow: 0 2px 30px rgba(6, 11, 20, 0.55);
+}
+.hgr-dev .cat i {
+  font-style: normal;
+  color: var(--tk-red);
+}
+
+/* Komponent perdesi: başlık küçülür, blok daralır — sekiz rozet sahnenin sağ
+   yarısına yayılırken sol sütun onlara yer bırakır. */
+.hgr-blok.kompakt {
+  max-width: min(30ch, 30vw);
+  /* Alta çekilir: motor kadrajın dikey ortasında duruyor, blok da ortada
+     olunca rozet etiketleriyle aynı bandı paylaşıyorlardı. */
+  align-self: flex-end;
+  margin-bottom: 10px;
+}
+.hgr-blok.kompakt .hgr-baslik {
+  font-size: clamp(1.25rem, 2vw, 1.9rem);
+  line-height: 1.1;
+}
+.hgr-blok.kompakt .hgr-alt {
+  margin-top: 10px;
+  font-size: var(--fs-kucuk);
+}
+.hgr-blok.kompakt .hgr-sayac {
+  margin-top: 16px;
+}
+.hgr-blok.kompakt .hgr-kutu b {
+  font-size: 1.1rem;
+}
+
+.hgr-baslik {
+  font-family: var(--tk-font-display);
+  font-size: clamp(1.9rem, 4.6vw, 4.1rem);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.hgr-alt {
+  margin-top: 16px;
+  max-width: 46ch;
+  color: var(--md-tx-2);
+  font-size: clamp(0.86rem, 1.1vw, 1.02rem);
+  line-height: 1.6;
+}
+
+/* --- sayaçlar --- */
+.hgr-sayac {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin-top: 26px;
+  border: 1px solid var(--md-line);
+  border-radius: var(--r-md);
+  background: rgba(10, 17, 30, 0.55);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+.hgr-kutu {
+  padding: 12px 18px;
+  min-width: 118px;
+  border-right: 1px solid var(--md-line);
+}
+.hgr-kutu:last-child {
+  border-right: 0;
+}
+.hgr-kutu b {
+  display: block;
+  font-family: var(--tk-font-display);
+  font-size: clamp(1.15rem, 2vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.hgr-kutu span {
+  display: block;
+  margin-top: 3px;
+  font-size: var(--fs-mikro);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--md-tx-3);
+}
+.hgr-kutu i {
+  display: block;
+  margin-top: 2px;
+  font-style: normal;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  color: var(--tk-red);
+}
+
+/* --- kapı düğmesi --- */
+.hgr-gir {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding: 14px 26px;
+  border: 0;
+  border-radius: var(--r-tam);
+  background: var(--tk-red);
+  color: #fff;
+  font-family: var(--tk-font-display);
+  font-size: var(--fs-orta);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  box-shadow: var(--sh-kirmizi);
+  transition: all var(--hiz-orta) var(--egri-standart);
+}
+.hgr-gir svg {
+  width: 20px;
+  height: 20px;
+  transition: transform var(--hiz-orta) var(--egri-standart);
+}
+.hgr-gir:hover {
+  background: var(--tk-red-700);
+  transform: translateY(-2px);
+}
+.hgr-gir:hover svg {
+  transform: translateX(5px);
+}
+
+/* ------------------------------------------------------ komponent etiketleri */
+/* Katman tıklamayı GEÇİRİR, yalnız rozetin kendisi tıklanır: motorun üstündeki
+   3D seçimi engellemesin (code/Kure.tsx'teki .kure-etiketler ile aynı kural). */
+.hgr-etiketler {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.hgr-etiket {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: auto;
+  cursor: pointer;
+  opacity: 0;
+  /* Sekiz etiket motorun çevresinde aynı anda duruyor; genişlik büyüdükçe
+     komşusuyla çakışıyor. 118px sekiz kategorinin en uzun adını (YAKIT &
+     KONTROL) tek satırda tutan en dar ölçü. */
+  min-width: 118px;
+  padding: 6px 10px;
+  border: 1px solid var(--md-line-2);
+  border-left: 2px solid var(--md-tx-2);
+  border-radius: var(--r-sm);
+  background: rgba(9, 15, 26, 0.78);
+  backdrop-filter: blur(6px);
+  transition:
+    background var(--hiz-hizli) var(--egri-standart),
+    border-color var(--hiz-hizli) var(--egri-standart);
+}
+.hgr-etiket .ata {
+  display: block;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: var(--tr-genis);
+  color: var(--md-tx-3);
+}
+.hgr-etiket b {
+  display: block;
+  font-size: var(--fs-etiket);
+  letter-spacing: 0.06em;
+  margin: 1px 0 2px;
+}
+.hgr-etiket .sy {
+  display: block;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  color: var(--md-tx-2);
+}
+.hgr-etiket.alarm {
+  border-left-color: var(--st-red);
+}
+.hgr-etiket.alarm .sy {
+  color: #ff8f9a;
+}
+.hgr-etiket:hover,
+.hgr-etiket.secili {
+  background: rgba(232, 25, 50, 0.16);
+  border-color: var(--tk-red);
+}
+
+/* ------------------------------------------------------------ komponent kartı */
+.hgr-kart {
+  width: min(330px, 32vw);
+  padding: 18px;
+  border: 1px solid var(--md-line-2);
+  border-radius: var(--r-lg);
+  background: rgba(10, 17, 30, 0.86);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--cam-sh);
+}
+.hgr-kart-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.hgr-kart-ust .ata {
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: var(--tr-genis);
+  color: var(--tk-red);
+}
+.hgr-kart-ust button {
+  background: none;
+  border: 0;
+  color: var(--md-tx-3);
+  font-size: var(--fs-kucuk);
+  padding: 2px 4px;
+}
+.hgr-kart-ust button:hover {
+  color: var(--md-tx);
+}
+.hgr-kart h3 {
+  margin: 6px 0 2px;
+  font-size: var(--fs-baslik);
+  letter-spacing: -0.01em;
+}
+.hgr-kart .yer {
+  font-size: var(--fs-etiket);
+  color: var(--md-tx-3);
+  margin-bottom: 12px;
+}
+.hgr-kart dl {
+  display: grid;
+  gap: 1px;
+  background: var(--md-line);
+  border: 1px solid var(--md-line);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  margin: 0;
+}
+.hgr-kart dl > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(14, 23, 39, 0.9);
+}
+.hgr-kart dt {
+  font-size: var(--fs-mikro);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--md-tx-3);
+}
+.hgr-kart dd {
+  margin: 0;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-kucuk);
+  text-align: right;
+}
+.hgr-kart dd em {
+  font-style: normal;
+  color: var(--st-teal);
+  margin-left: 4px;
+}
+.hgr-kart dl > div.alarm dd {
+  color: #ff8f9a;
+}
+.hgr-kart-git {
+  width: 100%;
+  margin-top: 12px;
+  padding: 9px;
+  border: 1px solid var(--md-line-2);
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--md-tx);
+  font-size: var(--fs-etiket);
+  letter-spacing: 0.04em;
+  transition: all var(--hiz-hizli) var(--egri-standart);
+}
+.hgr-kart-git:hover {
+  background: var(--tk-red);
+  border-color: var(--tk-red);
+  color: #fff;
+}
+
+/* -------------------------------------------------------------- perde rayı */
+.hgr-ray {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px clamp(18px, 3.4vw, 44px) 18px;
+}
+.hgr-oynat {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-tam);
+  border: 1px solid var(--md-line-2);
+  background: rgba(10, 17, 30, 0.6);
+  color: var(--md-tx);
+  font-size: 0.62rem;
+  line-height: 1;
+  transition: all var(--hiz-hizli) var(--egri-standart);
+}
+.hgr-oynat:hover {
+  border-color: var(--tk-red);
+  color: var(--tk-red);
+}
+
+.hgr-perdeler {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+.hgr-perde {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+}
+.hgr-perde .ad {
+  display: block;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: var(--tr-genis);
+  color: var(--md-tx-3);
+  margin-bottom: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--hiz-hizli) var(--egri-standart);
+}
+.hgr-perde .ray {
+  display: block;
+  height: 2px;
+  background: var(--md-line);
+  overflow: hidden;
+}
+/* İlerleme çubuğu framer-motion ile sürülür: saniyede 20 kez state güncellemek
+   yerine tek bir scaleX geçişi — HUD yeniden render edilmiyor. */
+.hgr-perde .ray i {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left;
+  transform: scaleX(0);
+  background: var(--tk-red);
+}
+.hgr-perde.on .ad {
+  color: var(--md-tx);
+}
+.hgr-perde.gecti .ray {
+  background: rgba(232, 25, 50, 0.35);
+}
+.hgr-perde:hover .ad {
+  color: var(--tk-red);
+}
+
+/* Sabit genişlik ŞART: ipucu metni perdeye göre değişiyor ve genişlik serbest
+   bırakılınca ray yeniden akıp perde düğmelerini imlecin altından kaydırıyordu
+   — tıklanan perde ile açılan perde farklı olabiliyordu. */
+.hgr-ipucu {
+  flex: none;
+  width: 268px;
+  text-align: right;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: 0.06em;
+  color: var(--md-tx-3);
+}
+.hgr-ipucu b {
+  color: var(--md-tx);
+  font-weight: 500;
+}
+
+/* ------------------------------------------------------------------ dar ekran */
+@media (max-width: 900px) {
+  .hgr-govde {
+    align-items: flex-end;
+    padding-bottom: 12px;
+  }
+  .hgr-blok {
+    max-width: none;
+  }
+  /* Komponent kartı dar ekranda sahnenin yarısını kapatıyordu; alta,
+     tam genişliğe alınır. */
+  .hgr-kart {
+    position: absolute;
+    left: clamp(18px, 3.4vw, 44px);
+    right: clamp(18px, 3.4vw, 44px);
+    bottom: 8px;
+    width: auto;
+  }
+  .hgr-sayac {
+    gap: 0;
+  }
+  .hgr-kutu {
+    min-width: 92px;
+    padding: 9px 12px;
+  }
+  .hgr-ipucu {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hgr-dev .cat {
+    animation: none;
+  }
+}

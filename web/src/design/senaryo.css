@@ -1,0 +1,625 @@
+/* =====================================================================
+   SENARYO — kriz simülatörü sayfasının kendi görsel dili.
+
+   Sayfa AÇIK TEMADA kalır (CODE'un koyu konsolu değil): burada bir kriz
+   *incelenir*, kokpit oturumu yürütülmez. 3D arazi bile beyaz zeminde,
+   mimari maket gibi durur.
+
+   Sınıf aileleri:
+     .gul-*    şok gülü (radar kontrol yüzeyi, SVG)
+     .ktak-*   kriz takvimi ay şeridi
+     .alm-*    alarm rayı
+     .arazi-*  3D arazi sahnesi + HUD + etiket katmanı
+   ===================================================================== */
+
+/* ------------------------------------------------------------- şok gülü */
+
+/* Gül dar bir kolonda da (g21'in 1fr tarafı) durabilmeli: ölçü VIEWPORT değil
+   KAPSAYICI genişliğinden okunur, yoksa geniş ekranda bile 340 px'lik gülün
+   yanına 90 px'lik bir liste sıkışıyordu. */
+.gul-kap {
+  container-type: inline-size;
+}
+.gul-sar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  justify-items: center;
+}
+@container (min-width: 620px) {
+  .gul-sar {
+    grid-template-columns: 340px minmax(0, 1fr);
+    justify-items: stretch;
+  }
+}
+
+.gul {
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 1;
+  height: auto;
+  display: block;
+  touch-action: none;
+  user-select: none;
+  overflow: visible;
+}
+
+/* viewBox BİLEREK 340×340 (gülün doğal piksel boyu): SVG içinde font-size ve
+   stroke-width kullanıcı birimidir ve viewBox ölçeğiyle çarpılır. 100 birimlik
+   bir kutuda "9px" yazı ekranda 30px çıkıyordu. */
+
+.gul .ring {
+  fill: none;
+  stroke: var(--ln);
+  stroke-width: 1;
+}
+.gul .ring.dis {
+  stroke: var(--ln-strong);
+}
+.gul .spoke {
+  stroke: var(--ln);
+  stroke-width: 1;
+}
+.gul .alan {
+  fill: rgba(193, 18, 31, 0.16);
+  stroke: var(--st-red);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+/* kesikli ikinci poligon = seçili preset'in DEĞİŞTİRİLMEMİŞ hâli */
+.gul .alan.baz {
+  fill: none;
+  stroke: var(--tx-4);
+  stroke-width: 1.3;
+  stroke-dasharray: 5 4;
+}
+.gul .tut {
+  fill: var(--s-0);
+  stroke: var(--st-red);
+  stroke-width: 2;
+  cursor: grab;
+  transition:
+    r var(--hiz-hizli) var(--egri-standart),
+    fill var(--hiz-hizli) var(--egri-standart);
+}
+.gul .tut-vur {
+  fill: var(--st-red);
+  r: 7;
+}
+.gul .tut:active {
+  cursor: grabbing;
+}
+/* görünmez dokunma alanı — 6px'lik daire parmakla tutulamıyor */
+.gul .tut-hit {
+  fill: transparent;
+  cursor: grab;
+}
+.gul .tut-hit:focus-visible {
+  outline: none;
+}
+.gul .tut-hit:focus-visible + .tut,
+.gul .tut-hit:focus + .tut {
+  fill: var(--st-red);
+}
+.gul .et {
+  font-family: var(--tk-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  fill: var(--tx-3);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+.gul .et.on {
+  fill: var(--tx);
+  font-weight: 600;
+}
+.gul .deg {
+  font-family: var(--tk-font-mono);
+  font-size: 9px;
+  fill: var(--st-red);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+.gul .merkez {
+  font-family: var(--tk-font-mono);
+  font-size: 8.5px;
+  fill: var(--tx-4);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+/* gülün sağındaki okunuş listesi — aynı eksen dizisinden üretilir */
+.gul-oku {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.gul-oku {
+  width: 100%;
+}
+.gul-satir {
+  display: grid;
+  grid-template-columns: 66px 26px minmax(0, 1fr) 56px;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 8px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  transition: all var(--hiz-hizli) var(--egri-standart);
+}
+.gul-satir.on {
+  background: var(--s-1);
+  border-color: var(--ln);
+}
+/* Sıfır eksende YAZI soluklaşır ama düğmeler soluklaşmaz: krize başlamak için
+   basılacak düğme tam da o satırdaki ▴, en görünür olması gereken yer orası. */
+.gul-satir.notr b,
+.gul-satir.notr .aciklama,
+.gul-satir.notr .sayi {
+  opacity: 0.5;
+}
+.gul-satir b {
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: 0.07em;
+  color: var(--tx-2);
+  font-weight: 600;
+}
+.gul-satir .aciklama {
+  font-size: var(--fs-etiket);
+  color: var(--tx-3);
+  line-height: 1.35;
+}
+.gul-satir .gul-ok {
+  display: grid;
+  gap: 2px;
+}
+.gul-satir .gul-ok button {
+  width: 26px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--tx-3);
+  background: var(--s-0);
+  border: 1px solid var(--ln-strong);
+  border-radius: var(--r-xs);
+  cursor: pointer;
+  transition: all var(--hiz-hizli) var(--egri-standart);
+}
+.gul-satir .gul-ok button svg {
+  width: 11px;
+  height: 6.6px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.gul-satir .gul-ok button:hover:not(:disabled) {
+  border-color: var(--tk-red);
+  color: var(--tk-red);
+}
+.gul-satir .gul-ok button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.gul-satir .sayi {
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-kucuk);
+  text-align: right;
+  color: var(--tx);
+  font-variant-numeric: tabular-nums;
+}
+.gul-satir.notr .sayi {
+  color: var(--tx-4);
+}
+
+/* --------------------------------------------------------- kriz takvimi */
+
+.ktak {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 96px;
+  margin: 6px 0 0;
+  padding: 0 2px;
+}
+.ktak button {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: none;
+  border: 0;
+  padding: 0;
+  position: relative;
+  border-radius: var(--r-xs);
+  transition: background var(--hiz-hizli) var(--egri-standart);
+}
+.ktak button:hover {
+  background: var(--s-2);
+}
+.ktak i {
+  display: block;
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  transition:
+    height var(--hiz-orta) var(--egri-standart),
+    background var(--hiz-orta) var(--egri-standart);
+}
+.ktak button.on i {
+  outline: 2px solid var(--tx);
+  outline-offset: 1px;
+}
+/* duvara çarpılan ay — üstünde küçük bir işaret */
+.ktak button.duvar::after {
+  content: '▼';
+  position: absolute;
+  top: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: var(--st-red);
+}
+.ktak-et {
+  display: flex;
+  gap: 3px;
+  margin-top: 5px;
+  padding: 0 2px;
+}
+.ktak-et span {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--tk-font-mono);
+  font-size: 8.5px;
+  color: var(--tx-4);
+  overflow: hidden;
+}
+.ktak-et span.on {
+  color: var(--tx);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------- alarm rayı */
+
+.alm {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+}
+.alm-k {
+  background: var(--s-0);
+  border: 1px solid var(--ln);
+  border-left: 3px solid var(--tx-4);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  box-shadow: var(--sh-0);
+  transition:
+    box-shadow var(--hiz-orta) var(--egri-standart),
+    transform var(--hiz-orta) var(--egri-standart);
+}
+.alm-k:hover {
+  box-shadow: var(--sh-2);
+  transform: translateY(-1px);
+}
+.alm-k.al {
+  border-left-color: var(--st-red);
+  border-color: var(--st-red-line);
+  background: var(--st-red-soft);
+}
+.alm-k.uy {
+  border-left-color: var(--st-amber);
+  border-color: var(--st-amber-line);
+}
+.alm-k.bl {
+  border-left-color: var(--st-blue);
+}
+.alm-k.iy {
+  border-left-color: var(--st-teal);
+  border-color: var(--st-teal-line);
+  background: var(--st-teal-soft);
+}
+.alm-ust {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.alm-tip {
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  letter-spacing: 0.09em;
+  font-weight: 700;
+}
+.alm-k.al .alm-tip {
+  color: var(--st-red);
+}
+.alm-k.uy .alm-tip {
+  color: var(--st-amber);
+}
+.alm-k.bl .alm-tip {
+  color: var(--st-blue);
+}
+.alm-k.iy .alm-tip {
+  color: var(--st-teal);
+}
+.alm-kod {
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  color: var(--tx-4);
+}
+.alm-k h4 {
+  font-size: var(--fs-govde);
+  line-height: 1.35;
+  margin-bottom: 5px;
+}
+.alm-k p {
+  font-size: var(--fs-kucuk);
+  color: var(--tx-2);
+  line-height: 1.5;
+}
+.alm-alt {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 9px;
+  flex-wrap: wrap;
+}
+.guv {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  color: var(--tx-3);
+}
+.guv .ray {
+  width: 42px;
+  height: 4px;
+  border-radius: var(--r-tam);
+  background: var(--s-3);
+  overflow: hidden;
+}
+.guv .ray i {
+  display: block;
+  height: 100%;
+  background: var(--tx-3);
+  border-radius: var(--r-tam);
+}
+
+/* ------------------------------------------------------------- 3D arazi */
+
+.arazi {
+  position: relative;
+  height: 430px;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  border: 1px solid var(--ln-strong);
+  background: var(--s-1);
+  cursor: grab;
+}
+.arazi:active {
+  cursor: grabbing;
+}
+.arazi canvas {
+  display: block;
+}
+
+/* Etiketler drei `Html` DEĞİL: drei her etiket için tuvali kaplayan bir
+   sarmalayıcı div açıyor ve sahnedeki tıklamayı yutuyor (DOM'da doğrulandı).
+   Konumlar her karede project() ile bu katmana yazılır. */
+.arazi-et {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.arazi-et span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  white-space: nowrap;
+  font-family: var(--tk-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--tx-2);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--ln);
+  border-radius: var(--r-xs);
+  padding: 1px 5px;
+  transition: opacity var(--hiz-hizli) linear;
+  will-change: transform, opacity;
+}
+.arazi-et span.ay {
+  color: var(--tx-3);
+  background: rgba(255, 255, 255, 0.7);
+}
+.arazi-et span.ay.on {
+  color: var(--tx);
+  border-color: var(--ln-strong);
+  font-weight: 600;
+}
+
+.arazi-hud {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+.arazi-hud > * {
+  pointer-events: auto;
+}
+.arazi-kut {
+  background: var(--cam);
+  border: 1px solid var(--cam-line);
+  border-radius: var(--r-sm);
+  box-shadow: var(--cam-sh);
+  padding: 7px 10px;
+  font-size: var(--fs-etiket);
+  color: var(--tx-2);
+  line-height: 1.45;
+  max-width: 260px;
+}
+.arazi-kut b {
+  display: block;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-kucuk);
+  color: var(--tx);
+}
+
+/* efsane şeridi — rampanın kendisiyle boyanır, ayrı bir palet yok */
+.arazi-efsane {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-mikro);
+  color: var(--tx-3);
+}
+.arazi-efsane .serit {
+  width: 92px;
+  height: 8px;
+  border-radius: var(--r-tam);
+  border: 1px solid var(--ln);
+}
+
+.arazi-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.arazi-zoom button {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--cam-line);
+  background: var(--cam);
+  box-shadow: var(--cam-sh);
+  color: var(--tx-2);
+  font-size: 15px;
+  line-height: 1;
+  font-family: var(--tk-font-mono);
+}
+.arazi-zoom button:hover {
+  color: var(--tk-red);
+}
+
+/* köşe işaretleri — sahne bir "ölçüm penceresi" gibi okunsun */
+.kose {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border: 1px solid var(--ln-strong);
+  pointer-events: none;
+  opacity: 0.8;
+}
+.kose.sol-ust {
+  left: 6px;
+  top: 6px;
+  border-right: 0;
+  border-bottom: 0;
+}
+.kose.sag-ust {
+  right: 6px;
+  top: 6px;
+  border-left: 0;
+  border-bottom: 0;
+}
+.kose.sol-alt {
+  left: 6px;
+  bottom: 6px;
+  border-right: 0;
+  border-top: 0;
+}
+.kose.sag-alt {
+  right: 6px;
+  bottom: 6px;
+  border-left: 0;
+  border-top: 0;
+}
+
+/* WebGL açılmazsa sunum durmaz: aynı sayılar düz listede */
+.arazi-yedek,
+.arazi-yuk {
+  height: 430px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--ln);
+  background: var(--s-1);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
+  align-items: center;
+  color: var(--tx-3);
+  font-size: var(--fs-kucuk);
+  padding: 20px;
+  text-align: center;
+}
+.arazi-yedek table {
+  font-size: var(--fs-etiket);
+  border-collapse: collapse;
+}
+.arazi-yedek td {
+  padding: 2px 8px;
+  font-family: var(--tk-font-mono);
+}
+.arazi-yedek td:first-child {
+  text-align: left;
+  font-family: var(--tk-font-sans);
+  color: var(--tx-2);
+}
+
+/* --------------------------------------------------- seçili ay etkisi */
+
+.delta {
+  font-family: var(--tk-font-mono);
+  font-size: var(--fs-etiket);
+  font-weight: 600;
+}
+.delta.art {
+  color: var(--st-red);
+}
+.delta.azal {
+  color: var(--st-teal);
+}
+.delta.sifir {
+  color: var(--tx-4);
+}
+
+/* motor notu — sayfanın kapanış paragrafı */
+.motor-not {
+  background: var(--s-1);
+  border: 1px solid var(--ln);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  font-size: var(--fs-kucuk);
+  line-height: 1.6;
+  color: var(--tx-2);
+}
+.motor-not b {
+  color: var(--tx);
+}
+.motor-not .mono {
+  color: var(--tx);
+}

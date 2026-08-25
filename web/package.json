@@ -1,0 +1,38 @@
+{
+  "name": "catalyst-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Catalyst — komponent envanter karar platformu (web uygulaması)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:tek-dosya": "vite build --mode singlefile",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:izle": "vitest",
+    "tip": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
+    "chart.js": "^4.5.1",
+    "framer-motion": "^12.42.2",
+    "react": "^19.2.8",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^19.2.8",
+    "three": "^0.185.1",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.185.1",
+    "@vitejs/plugin-react": "^6.0.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.1.5",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^4.1.10"
+  }
+}

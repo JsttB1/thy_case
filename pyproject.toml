@@ -1,0 +1,24 @@
+[project]
+name = "catalyst"
+version = "1.0.0"
+description = "Catalyst — Global Talent Bridge (Turkish Technic) komponent envanteri karar destek prototipi: dashboard üreteci, tahmin motoru ve sunum araçları"
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    # Test edilen sürümler — deterministik sonuçlar bu pinlerle doğrulandı
+    "pandas==2.3.3",
+    "numpy==2.2.6",
+    "tensorflow==2.21.0",   # yalnız train_demand_model.py için; Apple Silicon arm64 wheel mevcut
+    "python-pptx==1.0.2",   # sunum/fill_sablon.py (resmi şablon doldurma)
+    "reportlab==5.0.0",     # sunum/make_handout.py (jüri el notu PDF)
+    "matplotlib>=3.11.1",
+]
+
+[tool.uv]
+# Bu depo bir kütüphane değil, script koleksiyonu — paket olarak kurulmasın
+package = false
+
+[dependency-groups]
+gui = [
+    "pyqt6>=6.11.0",
+]
